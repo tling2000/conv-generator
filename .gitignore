@@ -1,0 +1,8 @@
+#ignorm the outs
+outs/
+#ignore the data
+data/
+#ignore the temp
+temp/
+#ignor the cache
+*.pyc
