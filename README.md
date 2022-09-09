@@ -13,11 +13,11 @@ Investigate the expression bottleneck of convolutional generative networks
     ```
 2. Simply create an virtural environment with `python>=3.8` and run `pip install -r requirements.txt` to download the required packages. If you use `anaconda3` or `miniconda`, you can run following instructions to download the required packages in python. 
     ```bash
-        conda create -y -n BN python=3.8
-        conda activate BN
+        conda create -y -n Conv python=3.8
+        conda activate Conv
         pip install pip --upgrade
         pip install -r requirements.txt
-        conda activate BN
+        conda activate Conv
         conda install pytorch=1.10.2 torchvision=0.11.3 torchaudio=0.10.2 cudatoolkit=11.1 -c pytorch -c nvidia
     ```
 
