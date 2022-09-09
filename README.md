@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Investigate the expression bottleneck of convolutional generative networks
+Investigate the expression bottleneck of convolutional generative networks.
 
 
 ## Requirements
