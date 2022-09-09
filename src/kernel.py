@@ -8,7 +8,7 @@ def kernel_mask(
     kernel_size: int,
     image_shape: list,
     index: list,
-    )->np.ndarray:
+    )->torch.Tensor:
     H,W = image_shape
     u,v = index
     u_ = np.arange(H)
@@ -18,8 +18,8 @@ def kernel_mask(
     for t in range(kernel_size):
         for s in range(kernel_size):
             R += np.exp(1j*((U-u)*t/H + (V-v)*s/H)*2*np.pi)
-    R = R /H/W
-    return R
+    R = R/H/W
+    return torch.from_numpy(R).detach()
 
 def kernel_fft(
     weights: torch.Tensor,
@@ -33,7 +33,7 @@ def kernel_fft(
     weights_expand[:,:,:kernel_size,:kernel_size] = weights
     weights_fft = torch.fft.ifft2(weights_expand) * (H*W)
 
-    return weights_fft
+    return weights_fft.detach()
 
 def kernel_ifft(
     weights_fft: torch.Tensor,
@@ -43,7 +43,7 @@ def kernel_ifft(
     c_in,c_out,H,W = weights_fft.shape
     weights = torch.real(torch.fft.fft2(weights_fft)[:,:,:kernel_size,:kernel_size]) /(H*W)
 
-    return weights
+    return weights.detach()
 
 if __name__ == '__main__':
     save_path = '/data2/tangling/conv-expression/outs/lab7/Ruv'
