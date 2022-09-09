@@ -19,7 +19,6 @@ if __name__ == '__main__':
         transforms.Resize((64,64))
     ])
     
-    
     images_insert = transform(images)
 
     images_fft = torch.fft.fftshift(torch.fft.fft2(images),(-2,-1))

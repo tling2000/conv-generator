@@ -88,7 +88,7 @@ def save_current_src(save_path: str,
     logger.info("save the current src")
     os.system("cp -r {} {}".format(src_path, save_path))
 
-def get_delta(true_value: np.ndarray,
+def get_error(true_value: np.ndarray,
               cal_value: np.ndarray,):
     delta = true_value - cal_value
     delta_norm = np.linalg.norm(delta.reshape(-1),ord=2)

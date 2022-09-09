@@ -54,7 +54,7 @@ if __name__ == '__main__':
     plot_heatmap(save_path,T,'T')
     for i in [3,5,7]:
         K = i
-        R = Ruv(K,(H,W),(u,v))
+        R = kernel_mask(K,(H,W),(u,v))
         plot_heatmap(save_path,np.abs(R),f'R_K{K}_sc',vmin=0,vmax=1)
         plot_heatmap(save_path,np.abs(R),f'R_K{K}')
     

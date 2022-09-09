@@ -10,7 +10,8 @@ SRC_PATH = os.path.dirname(os.path.abspath(__file__))
 KERNEL_SIZE = 3
 IMAGE_SHAPE = (64,64)
 
-MID_DIM = 5
+IN_CHANNELS = 3
+MID_CHANNELS = 256
 
 SAMPLE_NUM = 1000
 CONV_NUM = 5

@@ -1,3 +1,4 @@
+from audioop import bias
 import os
 import random
 from turtle import forward
@@ -8,7 +9,7 @@ import torch.nn as nn
 import math
 import numpy as np
 
-from config import MID_DIM,IMAGE_SHAPE,KERNEL_SIZE,CONV_NUM,PARAM_MEAN,PARAM_STD
+from config import IN_CHANNELS,MID_CHANNELS,IMAGE_SHAPE,KERNEL_SIZE,CONV_NUM,PARAM_MEAN,PARAM_STD
 
 class CircuConv(nn.Module):
     def __init__(
@@ -16,14 +17,14 @@ class CircuConv(nn.Module):
         in_channels,
         out_channels,
         kernel_size,
-        with_bias,) -> None:
+        with_bias,
+        pad,) -> None:
         super(CircuConv,self).__init__()
-        self.pad = kernel_size-1
+        self.pad = pad
         if with_bias:
             self.conv = nn.Conv2d(in_channels=in_channels,out_channels=out_channels,kernel_size=kernel_size,stride=1,bias=True)
         else:
             self.conv = nn.Conv2d(in_channels=in_channels,out_channels=out_channels,kernel_size=kernel_size,stride=1,bias=False)
-
 
     def forward(self,x):
         x = F.pad(x,(0,self.pad,0,self.pad),mode='circular')
@@ -31,48 +32,60 @@ class CircuConv(nn.Module):
         x = self.conv(x)
         return x
 
-class ConvNet(nn.Module):
+class CircuConvNet(nn.Module):
     def __init__(
         self,
         kernel_size: int,
-        mid_dims: int,
+        in_channels: int,
+        mid_channels: int,
         conv_num: int,
-        with_bias: bool
+        pad_mode : str = 'same',
+        with_bias: bool = False,
         ) -> None:
-        super(ConvNet,self).__init__()
-        assert conv_num >= 1,'the block num must larger than 1'
+        super(CircuConvNet,self).__init__()
+        assert conv_num >= 0,'the block num must larger than 0'
+        assert pad_mode in ['same','none'],'undefined padding mod'
 
-        self.main = nn.Sequential(
-            *[CircuConv(mid_dims,mid_dims,kernel_size,with_bias) for i in range(conv_num)],
-        )
+        if pad_mode == 'same':
+            pad = kernel_size-1
+        else :
+            pad = 0
 
-    def kaiming_uniform_(self,tensor,fan_in,a=0):
-        bound = math.sqrt(6/(1+a**2)/fan_in)
-        with torch.no_grad():
-            return tensor.uniform_(-bound,bound)
-
-    def kaiming_normal_(self,tensor,fan_in,a=0):
-        std = math.sqrt(2/(1+a**2)/fan_in)
-        with torch.no_grad():
-            return tensor.normal_(mean=0,std=std)
+        if conv_num == 1:
+            self.main = nn.Sequential(
+            CircuConv(in_channels,in_channels,kernel_size,self.pad,with_bias),
+            )
+        else:
+            self.main = nn.Sequential(
+                CircuConv(in_channels,mid_channels,kernel_size,pad,with_bias),
+                *[CircuConv(mid_channels,mid_channels,kernel_size,pad,with_bias) for i in range(conv_num-2)],
+                CircuConv(mid_channels,in_channels,kernel_size,pad,with_bias),
+            )
 
     def fixed_normal_(self,tensor,mean,std):
         with torch.no_grad():
             return tensor.normal_(mean=mean,std=std)
 
-    def reset_params(self,):
+    def reset_params(self,mean,std):
         for layer_name,layer in self.named_parameters():
-            if layer_name.endswith('weight'):
-                self.fixed_normal_(layer,PARAM_MEAN,PARAM_STD)
+            self.fixed_normal_(layer,mean,std)
 
     def forward(self,x):
         x = self.main(x)
         return x
 
 if __name__ == '__main__':
-    model = ConvNet(
+    model = CircuConvNet(
         KERNEL_SIZE,
-        MID_DIM,
+        IN_CHANNELS,
+        MID_CHANNELS,
         CONV_NUM,
+        with_bias=True,
     )
-    print(model)
+    model.reset_params(0.1,0.3)
+    for i in range(CONV_NUM):
+        print(i)
+        print(torch.std(model.main[i].conv.bias))
+        print(torch.mean(model.main[i].conv.bias))
+        print(torch.std(model.main[i].conv.weight))
+        print(torch.mean(model.main[i].conv.weight))
