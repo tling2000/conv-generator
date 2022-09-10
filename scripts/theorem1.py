@@ -1,11 +1,13 @@
 import os,sys
-import torch
-import numpy as np
 sys.path.append('../src')
 
-from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT,SRC_PATH
+import torch
+import numpy as np
+from tqdm import tqdm
+
+from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT
 from models import CircuConvNet
-from coef import kernel_fft
+from coef import kernel_fft,alpha_trans
 from utils import get_logger, plot_heatmap, save_current_src,set_random,get_error,set_logger
 from dat import get_gaussian_2d
 
@@ -26,23 +28,22 @@ def make_dirs(save_root):
     return save_path
 
 if __name__ == '__main__':
-
     seed = 0
     device = 'cuda:0'
     dat_mean = 0
-    dat_std = 0.01
+    dat_std = 0.1
     sample_num = 1000
+    K = KERNEL_SIZE
+    H,W = IMAGE_SHAPE
 
     save_root = '/data2/tangling/conv-generator/outs/theorem1'
     save_path = make_dirs(save_root)
     set_logger(save_path)
-    logger = get_logger(__name__,None)
+    logger = get_logger(__name__,True)
     set_random(seed)
-    save_current_src(save_path,SRC_PATH)
-    assert CONV_NUM == 1,'must be single layer'
-
-    #int the dataset
-    inputs = get_gaussian_2d(0,0.01,size=(sample_num,IN_CHANNELS,*IMAGE_SHAPE))
+    save_current_src(save_path,'../src')
+    save_current_src(save_path,'../scripts')
+    # assert CONV_NUM == 1,'must be single layer'
 
     # init the conv net
     conv_net = CircuConvNet(
@@ -52,29 +53,41 @@ if __name__ == '__main__':
         CONV_NUM,
         pad_mode='none',
         with_bias=WITH_BIAS,
-    )
+    ).to(device)
 
-    outputs = conv_net(inputs)
-    f_inputs = torch.fft.fft2(inputs)
-    f_outputs = torch.fft.fft2(outputs)
+    error_lis = []
+    for sample_id in tqdm(range(sample_num)):
+        #sample the input
+        input = get_gaussian_2d(dat_mean,dat_std,size=(1,IN_CHANNELS,*IMAGE_SHAPE)).to(device) #1*C*H*W
+        output = conv_net(input) #1*C*H*W
+        #real_fft
+        f_input = torch.fft.fft2(input)[0].detach() #C*H*W
+        f_output = torch.fft.fft2(output)[0].detach() #C*H*W
+        #get T and b
+        weight = conv_net.main[0].conv.weight.detach()
+        bias = conv_net.main[0].conv.bias.detach()
+        f_weight =  kernel_fft(weight,IMAGE_SHAPE,device)
+        f_bias = bias * (IMAGE_SHAPE[0]-KERNEL_SIZE+1) * (IMAGE_SHAPE[1]-KERNEL_SIZE+1)
 
-    weight = conv_net.main[0].conv.weight.detach()
-    bias = conv_net.main[0].conv.bias.detach()
+        #cal
+        cal_f_output_ = torch.zeros((IN_CHANNELS,*IMAGE_SHAPE),dtype=torch.complex64,device=device)  #C*H*W
+        cal_f_output = torch.zeros((IN_CHANNELS,H-K+1,W-K+1),dtype=torch.complex64,device=device) #C*(H-K+1)*(W-K+1)
+        #mat multiply
+        for u in range(H):
+            for v in range(W):
+                cal_f_output_[:,u,v] = f_weight[:,:,u,v] @ f_input[:,u,v]
+        #sum by alpha
+        for u in range(H):
+            for v in range(W):
+                mask = alpha_trans(K,IMAGE_SHAPE,(u,v),device) #(H-K+1)*(W-K+1)
+                cal_f_output += cal_f_output_[:,u,v].unsqueeze(-1).unsqueeze(-1) * mask.unsqueeze(0)
+        #add the basic frequency
+        cal_f_output[:,0,0] += f_bias 
 
-    f_weight =  kernel_fft(weight)
-    f_bias = bias * IMAGE_SHAPE[0] * IMAGE_SHAPE[1]
-
-    print(f_weight.shape)
-    print(f_inputs.shape)
-    print(f_outputs.shape)
-    # f_forward = 
-
+        #get error
+        error = get_error(f_output.cpu(),cal_f_output.cpu())
+        error_lis.append(error)
     
-    # cal_out_ffts =
-
-    # error = get_error(forward_fft.numpy(),out_fft.numpy())
-    # error_lis.append(error)
-        
-    # total = np.array(error_lis).mean()
-    # print(total)
+    mean_error = np.array(error_lis).mean()
+    logger.info(f'mean error:{mean_error}')
 

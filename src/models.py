@@ -17,8 +17,9 @@ class CircuConv(nn.Module):
         in_channels,
         out_channels,
         kernel_size,
+        pad,
         with_bias,
-        pad,) -> None:
+        ) -> None:
         super(CircuConv,self).__init__()
         self.pad = pad
         self.conv = nn.Conv2d(in_channels=in_channels,out_channels=out_channels,kernel_size=kernel_size,stride=1,bias=with_bias)
