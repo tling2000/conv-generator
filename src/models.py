@@ -21,10 +21,7 @@ class CircuConv(nn.Module):
         pad,) -> None:
         super(CircuConv,self).__init__()
         self.pad = pad
-        if with_bias:
-            self.conv = nn.Conv2d(in_channels=in_channels,out_channels=out_channels,kernel_size=kernel_size,stride=1,bias=True)
-        else:
-            self.conv = nn.Conv2d(in_channels=in_channels,out_channels=out_channels,kernel_size=kernel_size,stride=1,bias=False)
+        self.conv = nn.Conv2d(in_channels=in_channels,out_channels=out_channels,kernel_size=kernel_size,stride=1,bias=with_bias)
 
     def forward(self,x):
         x = F.pad(x,(0,self.pad,0,self.pad),mode='circular')
@@ -53,7 +50,7 @@ class CircuConvNet(nn.Module):
 
         if conv_num == 1:
             self.main = nn.Sequential(
-            CircuConv(in_channels,in_channels,kernel_size,self.pad,with_bias),
+            CircuConv(in_channels,in_channels,kernel_size,pad,with_bias),
             )
         else:
             self.main = nn.Sequential(

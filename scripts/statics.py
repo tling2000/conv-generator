@@ -3,7 +3,7 @@ import numpy as np
 import os
 from config import MID_DIM,IMAGE_SHAPE,KERNEL_SIZE,CONV_NUM,SAMPLE_NUM,PARAM_MEAN,PARAM_STD
 from models import ConvNet
-from kernel import kernel_fft,kernel_mask
+from coefficient import kernel_fft,kernel_mask
 from utils import plot_heatmap,set_random,get_delta
 
 if __name__ == '__main__':
