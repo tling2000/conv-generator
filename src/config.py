@@ -9,10 +9,10 @@ MOMENT = str(datetime.now().hour).zfill(2)+str(datetime.now().minute).zfill(2) +
 KERNEL_SIZE = 3
 IMAGE_SHAPE = (10,10)
 
-IN_CHANNELS = 128
-MID_CHANNELS = 128
+IN_CHANNELS = 512
+MID_CHANNELS = 512
 
-CONV_NUM = 2
+CONV_NUM = 1
 
 PARAM_MEAN = 0
 PARAM_STD = 0.1

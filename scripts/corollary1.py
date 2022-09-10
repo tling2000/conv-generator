@@ -32,12 +32,12 @@ if __name__ == '__main__':
     seed = 0
     device = 'cuda:0'
     dat_mean = 0
-    dat_std = 0.01
+    dat_std = 0.1
     sample_num = 1
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
-    save_root = '/data2/tangling/conv-generator/outs/theorem2'
+    save_root = '/data2/tangling/conv-generator/outs/corollary1'
     save_path = make_dirs(save_root)
     set_logger(save_path)
     logger = get_logger(__name__,True)

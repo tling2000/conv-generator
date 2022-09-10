@@ -43,7 +43,7 @@ if __name__ == '__main__':
     set_random(seed)
     save_current_src(save_path,'../src')
     save_current_src(save_path,'../scripts')
-    # assert CONV_NUM == 1,'must be single layer'
+    assert CONV_NUM == 1,'must be single layer'
 
     # init the conv net
     conv_net = CircuConvNet(

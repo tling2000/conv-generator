@@ -31,7 +31,7 @@ if __name__ == '__main__':
     seed = 0
     device = 'cuda:0'
     dat_mean = 0
-    dat_std = 0.01
+    dat_std = 0.1
     sample_num = 1000
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
