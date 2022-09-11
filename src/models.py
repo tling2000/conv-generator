@@ -1,7 +1,5 @@
-from audioop import bias
 import os
 import random
-from turtle import forward
 import torch.nn.functional as F
 
 import torch
@@ -10,6 +8,7 @@ import math
 import numpy as np
 
 from config import IN_CHANNELS,MID_CHANNELS,IMAGE_SHAPE,KERNEL_SIZE,CONV_NUM,PARAM_MEAN,PARAM_STD
+from coef import kernel_fft
 
 class CircuConv(nn.Module):
     def __init__(
@@ -44,6 +43,8 @@ class CircuConvNet(nn.Module):
         assert conv_num >= 0,'the block num must larger than 0'
         assert pad_mode in ['same','none'],'undefined padding mod'
 
+        self.with_bias = with_bias
+        self.conv_num = conv_num
         if pad_mode == 'same':
             pad = kernel_size-1
         else :
@@ -68,6 +69,52 @@ class CircuConvNet(nn.Module):
         for layer_name,layer in self.named_parameters():
             self.fixed_normal_(layer,mean,std)
 
+    def get_freq_trans(
+        self,
+        image_shape: list,
+        lidx: list,
+        device: str
+        )->list:
+
+        H,W = image_shape
+        # if we only want know single layer
+        if type(lidx) == int:
+            weight = self.main[lidx].conv.weight.detach()
+            f_weight =  kernel_fft(weight,image_shape,device)
+            if not self.with_bias:
+                return f_weight.detach(),None
+            bias = self.main[lidx].conv.bias.detach()
+            f_bias = (bias * H * W).to(device)
+            return f_weight.detach() ,f_bias.detach()
+        
+        # else 
+        weight = self.main[lidx[0]].conv.weight.detach()
+        f_weight = kernel_fft(weight,image_shape,device)
+        T =  f_weight
+
+        if self.with_bias:
+            bias = self.main[lidx[0]].conv.bias.detach()
+            f_bias = (bias * H * W).to(device)
+            beta = f_bias
+            print(beta.shape)
+    
+        for layer_id in range(lidx[0]+1,lidx[1]):
+            print(T.shape)
+            print(layer_id,beta.shape)
+    
+            weight = self.main[layer_id].conv.weight.detach()
+            f_weight = kernel_fft(weight,image_shape,device)
+            T = (f_weight.permute((2,3,0,1)) @ T.permute((2,3,0,1))).permute((2,3,0,1))
+
+            if self.with_bias:
+                bias = self.main[layer_id].conv.bias.detach()
+                f_bias = (bias * H * W).to(device)
+                beta = f_bias + torch.real(f_weight[:,:,0,0]) @ beta
+
+        if not self.with_bias:
+            return T.detach(),None
+        return T.detach(),beta.detach()
+
     def forward(self,x):
         x = self.main(x)
         return x
@@ -81,9 +128,8 @@ if __name__ == '__main__':
         with_bias=True,
     )
     model.reset_params(0.1,0.3)
-    for i in range(CONV_NUM):
-        print(i)
-        print(torch.std(model.main[i].conv.bias))
-        print(torch.mean(model.main[i].conv.bias))
-        print(torch.std(model.main[i].conv.weight))
-        print(torch.mean(model.main[i].conv.weight))
+    model.get_freq_trans((64,64),(0,3),'cpu')
+    # a = torch.randn((3,3,2,4))
+    # b = torch.randn((3,3,4,6))
+    # c = torch.matmul(a,b)
+    # print(c.shape)

@@ -1,10 +1,10 @@
 import os
-from telnetlib import KERMIT
 import numpy as np
 from config import IMAGE_SHAPE, KERNEL_SIZE
 from utils import plot_heatmap,set_random,get_error
 from tqdm import tqdm
 import torch
+
 
 def alpha_trans_(
     kernel_size: int,
@@ -105,18 +105,12 @@ def kernel_ifft(
 
     return weights.to(device).detach()
 
+
+
+
 if __name__ == '__main__':
     save_path = '/data2/tangling/conv-generator/outs/theorem1'
-    u,v = 5,5
-    # for u in range(64):
-    #     for v in range(64):
-    a_ = alpha_trans_(KERNEL_SIZE,IMAGE_SHAPE,(u,v),'cpu')
-    a = alpha_trans(KERNEL_SIZE,IMAGE_SHAPE,(u,v),'cpu')
-    print(a)
-    print(a_)
-    error = get_error(a,a_)
-    print(error)
 
-    plot_heatmap(save_path,torch.abs(a),'a') 
+
 
 

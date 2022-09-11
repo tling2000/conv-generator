@@ -55,6 +55,7 @@ if __name__ == '__main__':
         pad_mode='same',
         with_bias=WITH_BIAS,
     ).to(device)
+    conv_net.reset_params(PARAM_MEAN,PARAM_STD)
 
     error_lis = []
     for sample_id in tqdm(range(sample_num)):
