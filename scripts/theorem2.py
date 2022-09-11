@@ -65,13 +65,11 @@ if __name__ == '__main__':
         f_input = torch.fft.fft2(input)[0].detach() #C*H*W
         f_output = torch.fft.fft2(output)[0].detach() #C*H*W
         #get T and b
-        weight = conv_net.main[0].conv.weight.detach()
-        bias = conv_net.main[0].conv.bias.detach()
-        f_weight =  kernel_fft(weight,IMAGE_SHAPE,device)
-        f_bias = bias * (H*W)
+        f_weight,f_bias =  conv_net.get_freq_trans(IMAGE_SHAPE,0,device)
+        f_bias = f_bias
 
         #cal
-        cal_f_output = torch.zeros((IN_CHANNELS,H,W),dtype=torch.complex64,device=device) #C*(H-K+1)*(W-K+1)
+        cal_f_output = torch.zeros((IN_CHANNELS,H,W),dtype=torch.complex64,device=device) #C*H*W
         #mat multiply
         for u in range(H):
             for v in range(W):

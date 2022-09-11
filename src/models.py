@@ -96,12 +96,8 @@ class CircuConvNet(nn.Module):
             bias = self.main[lidx[0]].conv.bias.detach()
             f_bias = (bias * H * W).to(device)
             beta = f_bias
-            print(beta.shape)
     
         for layer_id in range(lidx[0]+1,lidx[1]):
-            print(T.shape)
-            print(layer_id,beta.shape)
-    
             weight = self.main[layer_id].conv.weight.detach()
             f_weight = kernel_fft(weight,image_shape,device)
             T = (f_weight.permute((2,3,0,1)) @ T.permute((2,3,0,1))).permute((2,3,0,1))

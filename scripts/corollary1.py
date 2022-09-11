@@ -30,10 +30,10 @@ def make_dirs(save_root):
 
 if __name__ == '__main__':
     seed = 0
-    device = 'cuda:0'
+    device = 'cpu'
     dat_mean = 0
     dat_std = 0.1
-    sample_num = 1
+    sample_num = 1000
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
@@ -44,7 +44,6 @@ if __name__ == '__main__':
     set_random(seed)
     save_current_src(save_path,'../src')
     save_current_src(save_path,'../scripts')
-    assert IN_CHANNELS == MID_CHANNELS,'must be same shape'
 
     # init the conv net
     conv_net = CircuConvNet(
@@ -66,22 +65,15 @@ if __name__ == '__main__':
         f_input = torch.fft.fft2(input)[0].detach() #C*H*W
         f_output = torch.fft.fft2(output)[0].detach() #C*H*W
 
-        cal_f_output = f_input.clone().detach() #C*(H-K+1)*(W-K+1)
-
-        for layer_id in range(CONV_NUM):
-            #get T and b
-            weight = conv_net.main[layer_id].conv.weight.detach()
-            bias = conv_net.main[layer_id].conv.bias.detach()
-            f_weight =  kernel_fft(weight,IMAGE_SHAPE,device)
-            f_bias = bias * (H*W)
-
-            #cal
-            #mat multiply
-            for u in range(H):
-                for v in range(W):
-                    cal_f_output[:,u,v] = f_weight[:,:,u,v] @ cal_f_output[:,u,v]
-            #add the basic frequency
-            cal_f_output[:,0,0] += f_bias 
+        #cal
+        T,beta = conv_net.get_freq_trans(IMAGE_SHAPE,(0,CONV_NUM),device)
+        cal_f_output = torch.zeros((IN_CHANNELS,H,W),dtype=torch.complex64,device=device) #C*H*W
+        #mat multiply
+        for u in range(H):
+            for v in range(W):
+                cal_f_output[:,u,v] = T[:,:,u,v] @ f_input[:,u,v]
+        #add the basic frequency
+        cal_f_output[:,0,0] += beta
 
         #get error
         error = get_error(f_output.cpu(),cal_f_output.cpu())

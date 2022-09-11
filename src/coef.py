@@ -46,12 +46,11 @@ def alpha_trans(
     alphav[np.sin(gmm * np.pi)==0] = W_ 
 
     mask = alphau * alphav
-    
     mask = mask / H/W
 
     return torch.from_numpy(mask).to(device).detach()
 
-def delta_trans(
+def delta_trans_(
     kernel_size: int,
     image_shape: list,
     index: list,
@@ -65,8 +64,30 @@ def delta_trans(
     mask = np.zeros((H,W),dtype=np.complex64)
     for t in range(kernel_size):
         for s in range(kernel_size):
-            mask += np.exp(1j*((U-u)*t/H + (V-v)*s/H)*2*np.pi)
+            mask += np.exp(1j*((U-u)*t/H + (V-v)*s/W)*2*np.pi)
     mask = mask/H/W
+    return torch.from_numpy(mask).to(device).detach()
+
+def delta_trans(
+    kernel_size: int,
+    image_shape: list,
+    index: list,
+    device: str
+    )->torch.Tensor:
+    H,W = image_shape
+    K = kernel_size
+    u,v = index
+    u_ = np.arange(H)
+    v_ = np.arange(W)
+    V,U = np.meshgrid(v_,u_)
+
+    deltax = np.sin(K*(U-u)*np.pi/H) / np.sin((U-u)*np.pi/H) * np.exp(1j*(U-u)*(K-1)*np.pi/H)
+    deltax[U==u] = K
+    deltay = np.sin(K*(V-v)*np.pi/W) / np.sin((V-v)*np.pi/W) * np.exp(1j*(V-v)*(K-1)*np.pi/W)
+    deltay[V==v] = K
+    mask = deltax * deltay
+    mask = mask / H/W
+
     return torch.from_numpy(mask).to(device).detach()
 
 def Ruv(
@@ -106,10 +127,14 @@ def kernel_ifft(
     return weights.to(device).detach()
 
 
-
-
 if __name__ == '__main__':
     save_path = '/data2/tangling/conv-generator/outs/theorem1'
+    d = delta_trans(KERNEL_SIZE,IMAGE_SHAPE,(3,3),'cpu')
+    d_ = delta_trans_(KERNEL_SIZE,IMAGE_SHAPE,(3,3),'cpu')
+    # print(d)
+    # print(d_)
+    error = get_error(d,d_)
+    print(error)
 
 
 
