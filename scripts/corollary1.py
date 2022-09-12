@@ -80,6 +80,8 @@ if __name__ == '__main__':
         error_lis.append(error)
     
     mean_error = np.array(error_lis).mean()
+    std_error = np.array(error_lis).std()
     logger.info(f'mean error:{mean_error}')
+    logger.info(f'std error:{std_error}')
 
 

@@ -111,12 +111,13 @@ if __name__ == '__main__':
             bias_error_lis.append(bias_error)
 
     mean_weight_error = np.array(weight_error_lis).mean()
+    std_weight_error = np.array(weight_error_lis).std()
     mean_bias_error = np.array(bias_error_lis).mean()
+    std_bias_error = np.array(bias_error_lis).std()
     logger.info(f'mean weight error:{mean_weight_error}')
     logger.info(f'mean bias error:{mean_bias_error}')
-
-
-
+    logger.info(f'std weight error:{std_weight_error}')
+    logger.info(f'std bias error:{std_bias_error}')
 
 
     #     #forward
