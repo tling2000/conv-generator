@@ -44,7 +44,9 @@ def plot_heatmap(save_path: str,
                  name: str, 
                  col: str = 'coolwarm', 
                  vmin: int = None, 
-                 vmax: int = None) -> None: 
+                 vmax: int = None,
+                 cbar: bool = True,
+                 ) -> None: 
     """plot heatmap 
     Args: 
         save_path (str): save_path
@@ -58,12 +60,16 @@ def plot_heatmap(save_path: str,
         None
     """
     assert (vmin is None) == (vmax is None), "vmin and vmax must be both None or not None"
-    fig, ax = plt.subplots(figsize=(10, 8))
+    if cbar:
+        fig, ax = plt.subplots(figsize=(3,2.4))
+    else:
+        fig, ax = plt.subplots(figsize=(3,3))
+
     if col == "coolwarm": 
-        ax = sns.heatmap(mat, annot=False, cbar=True, cmap = col, vmin = vmin, vmax = vmax) 
+        ax = sns.heatmap(mat, annot=False, cbar=cbar, cmap = col, vmin = vmin, vmax = vmax) 
     else: 
-        ax = sns.heatmap(mat, annot=False, cbar=True, vmin = vmin, vmax = vmax) 
-    ax.set_title(name) 
+        ax = sns.heatmap(mat, annot=False, cbar=cbar, vmin = vmin, vmax = vmax) 
+    # ax.set_title(name) 
     plt.axis('off')
     fig.tight_layout()
     if not os.path.exists(save_path):
@@ -72,7 +78,7 @@ def plot_heatmap(save_path: str,
         path = os.path.join(save_path, f"{name}.png")
     else:
         path = os.path.join(save_path, "{}_{:.4f}to{:.4f}.png".format(name, vmin, vmax)) 
-    fig.savefig(path) 
+    fig.savefig(path,dpi=300) 
     plt.close()
 
 def save_current_src(save_path: str,

@@ -7,14 +7,14 @@ MOMENT = str(datetime.now().hour).zfill(2)+str(datetime.now().minute).zfill(2) +
     str(datetime.now().second).zfill(2)
 
 KERNEL_SIZE = 3
-IMAGE_SHAPE = (14,14)
+IMAGE_SHAPE = (64,64)
 
-IN_CHANNELS = 128
-MID_CHANNELS = 128
+IN_CHANNELS = 1
+MID_CHANNELS = 8
 
-CONV_NUM = 5
+CONV_NUM = 50
 
-PARAM_MEAN = 0
+PARAM_MEAN = 0.01
 PARAM_STD = 0.1
 
-WITH_BIAS = True
+WITH_BIAS = False
