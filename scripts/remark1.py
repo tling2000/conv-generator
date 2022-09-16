@@ -5,13 +5,11 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from matplotlib import pyplot as plt
-from PIL import Image
-from torchvision import transforms
 
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT
 from models import ConvNet,CircuConvNet
 from coef import kernel_fft,alpha_trans
-from utils import get_logger, plot_heatmap, save_current_src,set_random,get_error,set_logger,plot_fft,save_image
+from utils import get_logger, plot_heatmap, save_current_src,set_random,get_error,set_logger
 from dat import get_tiny_imagenet
 
 def make_dirs(save_root):
@@ -30,15 +28,20 @@ def make_dirs(save_root):
         os.makedirs(save_path)
     return save_path
 
+def plot_mean_abs(save_path,mat,name):
+    assert len(mat.shape) == 4,''
+    mean_abs = torch.mean(torch.abs(mat),dim=(0,1)).detach()
+    mean_abs_norm = mean_abs / mean_abs.max()
+    plot_heatmap(save_path,mean_abs_norm,name,cbar=False)
 
 if __name__ == '__main__':
-    seed = 1
+    seed = 2
     device = 'cuda:1'
-    sample_num = 10
+    sample_num = 100
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
-    save_root = f'/data2/tangling/conv-generator/outs/remark2'
+    save_root = f'/data2/tangling/conv-generator/outs/remark1/som'
     
     save_path = make_dirs(save_root)
     set_logger(save_path)
@@ -49,27 +52,34 @@ if __name__ == '__main__':
 
     dat = get_tiny_imagenet(sample_num).to(device)
 
-    conv_net = ConvNet(
+    conv_net = CircuConvNet(
         KERNEL_SIZE,
         IN_CHANNELS,
         MID_CHANNELS,
         CONV_NUM,
+        pad_mode='same',
         with_bias=WITH_BIAS,
-        with_relu=True
+        with_relu=False
     ).to(device)
     conv_net.reset_params(PARAM_MEAN,PARAM_STD)
 
-    inputs = dat.detach()
-    outputs = inputs.clone().detach()
-    for j in range(10):
-        image = inputs[j].mean(0).detach()
-        save_image(os.path.join(save_path,f'output{j}'),image,'input')
-        plot_fft(os.path.join(save_path,f'f_output{j}'),image,'input')
-    for i in range(CONV_NUM):
-        outputs = conv_net.main[i](outputs)
-        if (i+1) % 5 == 0:
-            for j in range(10):
-                image = outputs[j].mean(0).detach()
-                save_image(os.path.join(save_path,f'output{j}'),image,f'layer{i+1}')
-                plot_fft(os.path.join(save_path,f'f_output{j}'),image,f'layer{i+1}')
+    #plot1
+    som_lis = []
+    for i in range(0,50):
+        T,_ = conv_net.get_freq_trans(IMAGE_SHAPE,[0,i+1],'cpu')
+        som = torch.real(T * torch.conj(T))[0]
+        som_lis.append(som)
+    som_array = torch.concat(som_lis)
 
+    log_som_array = torch.log10(som_array)
+    x = range(1,CONV_NUM+1)
+    fig,ax = plt.subplots()
+    # ax.set_yscale('log')
+    ax.grid(True,which="both", linestyle='--')
+    ax.set_ylabel('SOM')
+    ax.set_xlabel('layer')
+    for i in range(3):
+        for j in range(3):
+            ax.plot(x,som_array[:,i,j])
+    fig.savefig(os.path.join(save_path,'som.jpg'))
+    

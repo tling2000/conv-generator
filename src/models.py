@@ -1,5 +1,6 @@
 import os
 import random
+import re
 from turtle import forward
 import torch.nn.functional as F
 
@@ -180,6 +181,49 @@ class ConvNet(nn.Module):
 
     def forward(self,x):
         return self.main(x)
+
+class ToyAE(nn.Module):
+    def __init__(
+        self,
+        kernel_size : int,
+        in_channels: int,
+        mid_channels: int,
+        with_upsample: bool,
+        with_bias: bool,
+        ) -> None:
+        super(ToyAE,self).__init__()
+
+        assert kernel_size % 2 == 1
+        if with_upsample:
+            stride = 2
+        else:
+            stride = 1
+        padding = kernel_size // 2
+        out_padding = 2*padding + stride - kernel_size
+        padding_mode = 'zeros'
+
+        
+
+        self.encode = nn.Sequential(
+            nn.Conv2d(in_channels,mid_channels,kernel_size,padding=padding,stride=stride,bias=with_bias,padding_mode=padding_mode),
+            nn.ReLU(),
+            nn.Conv2d(mid_channels,mid_channels,kernel_size,padding=padding,stride=stride,bias=with_bias,padding_mode=padding_mode),
+            nn.ReLU(),
+            nn.Conv2d(mid_channels,mid_channels,kernel_size,padding=padding,stride=stride,bias=with_bias,padding_mode=padding_mode),
+        )
+
+        self.decode = nn.Sequential(
+            nn.ConvTranspose2d(mid_channels,mid_channels,kernel_size,padding=padding,stride=stride,bias=with_bias,padding_mode=padding_mode,output_padding=out_padding),
+            nn.ReLU(),
+            nn.ConvTranspose2d(mid_channels,mid_channels,kernel_size,padding=padding,stride=stride,bias=with_bias,padding_mode=padding_mode,output_padding=out_padding),
+            nn.ReLU(),
+            nn.ConvTranspose2d(mid_channels,in_channels,kernel_size,padding=padding,stride=stride,bias=with_bias,padding_mode=padding_mode,output_padding=out_padding),
+        )
+
+    def forward(self,x):
+        x = self.encode(x)
+        x = self.decode(x)
+        return x
 
 if __name__ == '__main__':
     model = CircuConvNet(

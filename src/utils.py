@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import random
 import logging
+from torchvision import transforms
 
 def set_logger(save_path: str) -> None:
     logfile = os.path.join(save_path, "logfile.txt")
@@ -100,3 +101,38 @@ def get_error(true_value: np.ndarray,
     delta_norm = np.linalg.norm(delta.reshape(-1),ord=2)
     true_norm = np.linalg.norm(true_value.reshape(-1),ord=2)
     return delta_norm / true_norm
+
+def get_mean_freq_scale(image):
+    assert len(image.shape) == 3
+    H,W = image.shape
+    image = image.detach().cpu()
+    f_image = torch.fft.fft2(image)
+    f_image = torch.fft.fftshift(f_image,dim = (-2,-1))
+    f_image_power = torch.real(f_image * torch.conj(f_image))
+    f_image_norm = f_image_power / torch.sum(f_image_power,dim=(-2,-1),keepdim=True)
+    low_freq_scale = torch.sum(f_image_norm[:,int(3*H/8):int(5*H/8)],dim=(-2,-1))
+    mean_scale = low_freq_scale.mean()
+    return mean_scale
+
+def plot_fft(save_path,image,name):
+    assert len(image.shape) == 2,''
+    H,W = image.shape
+    image = image.detach().cpu()
+    f_image = torch.fft.fft2(image)
+    # f_image[0,0] = 0
+    f_image = torch.fft.fftshift(f_image)
+    f_image_power = torch.real(f_image * torch.conj(f_image))
+    f_image_norm = f_image_power / f_image_power.sum()
+    plot_heatmap(save_path,torch.log10(f_image_norm),name,vmin=-6,vmax=0,cbar=False)
+    low_freq_scale = torch.sum(f_image_norm[int(3*H/8):int(5*H/8)])
+    return low_freq_scale
+
+def save_image(save_path,tensor,name):
+    assert len(tensor.shape) == 2,''
+    tensor = tensor.detach().cpu()
+    tensor = (tensor-tensor.min()) /(tensor.max()-tensor.min())
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    unloader = transforms.ToPILImage()
+    image = unloader(tensor)
+    image.save(os.path.join(save_path,f'{name}.jpg'))
