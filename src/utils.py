@@ -127,10 +127,11 @@ def plot_fft(save_path,image,name):
     low_freq_scale = torch.sum(f_image_norm[int(3*H/8):int(5*H/8)])
     return low_freq_scale
 
-def save_image(save_path,tensor,name):
+def save_image(save_path,tensor,name,is_norm=False):
     assert len(tensor.shape) == 2,''
     tensor = tensor.detach().cpu()
-    tensor = (tensor-tensor.min()) /(tensor.max()-tensor.min())
+    if is_norm:
+        tensor = (tensor-tensor.min()) /(tensor.max()-tensor.min())
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     unloader = transforms.ToPILImage()

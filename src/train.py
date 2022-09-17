@@ -56,11 +56,11 @@ def train(
 
                     if rnd == 0:
                         X_hat = X_bs[trace_batch_id].mean(0).detach()
-                        save_image(os.path.join(save_path,f'trace_{trace_id}'),X_hat,f'X_hat')
+                        save_image(os.path.join(save_path,f'trace_{trace_id}'),X_hat,f'X_hat',False)
                         plot_fft(os.path.join(save_path,f'trace_{trace_id}'),X_hat,f'f_X_hat')
                     if rnd % 1 == 0:
                         X_pre = X_bs_pre[trace_batch_id].mean(0).detach()
-                        save_image(os.path.join(save_path,f'trace_{trace_id}'),X_pre,f'X_pre_rnd{rnd}')
+                        save_image(os.path.join(save_path,f'trace_{trace_id}'),X_pre,f'X_pre_rnd{rnd}',False)
                         plot_fft(os.path.join(save_path,f'trace_{trace_id}'),X_pre,f'f_X_pre{rnd}')
         #register the loss
         losses.append(loss)

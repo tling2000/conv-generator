@@ -1,5 +1,4 @@
 import os,sys
-from turtle import forward
 sys.path.append('../src')
 
 import torch
