@@ -95,12 +95,28 @@ def save_current_src(save_path: str,
     logger.info("save the current src")
     os.system("cp -r {} {}".format(src_path, save_path))
 
-def get_error(true_value: np.ndarray,
-              cal_value: np.ndarray,):
+def get_error(
+        true_value: np.ndarray,
+        cal_value: np.ndarray,
+        ):
     delta = true_value - cal_value
     delta_norm = np.linalg.norm(delta.reshape(-1),ord=2)
     true_norm = np.linalg.norm(true_value.reshape(-1),ord=2)
-    return delta_norm / true_norm
+    error = delta_norm / true_norm
+
+    return error
+
+def get_cos(
+        true_value: np.ndarray,
+        cal_value: np.ndarray,
+        dims: list,
+        ):
+    true_value,cal_value = np.abs(true_value),np.abs(cal_value)
+    num = np.sum((true_value * cal_value),axis=dims)
+    denom = np.sqrt(np.sum(true_value**2,axis=dims)) * np.sqrt(np.sum(cal_value**2,axis=dims))
+    return (num / denom).mean()
+
+
 
 
 def plot_fft(save_path,image,name,log_space,vmin=None,vmax=None,cbar=False):
@@ -141,5 +157,5 @@ def get_low_freq_scale(image):
     f_image = torch.fft.fftshift(f_image,dim = (-2,-1))
     f_image_power = torch.real(f_image * torch.conj(f_image))
     f_image_norm = f_image_power / torch.sum(f_image_power,dim=(-2,-1),keepdim=True)
-    low_freq_scale = torch.sum(f_image_norm[:,int(H/2-3):int(H/2+3),int(W/2-3):int(W/2+3)],dim=(-2,-1))
+    low_freq_scale = torch.sum(f_image_norm[:,int(H/2-H/8):int(H/2+H/8),int(W/2-W/8):int(W/2+H/8)],dim=(-2,-1))
     return low_freq_scale

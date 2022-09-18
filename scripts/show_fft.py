@@ -8,13 +8,14 @@ import numpy as np
 import torch
 from utils import plot_heatmap
 from dat import create_data
+from matplotlib import pyplot as plt
 
 def plot_fft(save_path,image,name,log_space,vmin=None,vmax=None,cbar=False):
     assert len(image.shape) == 3,''
     C,H,W = image.shape
     image = image.detach().cpu()
     f_image = torch.fft.fft2(image)
-    f_image[0,0] = 0
+    f_image[:,0,0] = 0
     f_image = torch.fft.fftshift(f_image,dim=(-2,-1))
     f_image_norm = torch.abs(f_image).mean(0)
     # f_image_power = torch.real(f_image * torch.conj(f_image))
@@ -52,13 +53,22 @@ def get_low_freq_scale(image):
 
 if __name__ == '__main__':
     data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
-    save_path = '/data2/tangling/conv-generator/temp/fft-zero'
+    save_path = '/data2/tangling/conv-generator/temp/fft-all'
 
     images = torch.load(data_path)
     scale = get_low_freq_scale(images.mean(1))
     indexes = np.argsort(scale)[:100]
     
     for idx in indexes:
-        plot_fft(save_path,images[idx],'f_image{}_{:.2f}'.format(idx,scale[idx]),log_space=False)
-        # plot_fft(save_path,images[idx],f'f_image{idx}',log_space=True)
-        save_image(save_path,images[idx],f'image{idx}',is_rgb=True)
+        image = images[idx]
+        image = image.detach().cpu()
+        fig,ax = plt.subplots(2,2,figsize=(10,10))
+        ax[0,0].imshow(torch.permute(image,(1,2,0)))
+        f_image = torch.fft.fft2(image)
+        f_image = torch.fft.fftshift(f_image,dim=(-2,-1))
+        f_image_norm = torch.abs(f_image).mean(0)
+        ax[0,1].imshow(f_image_norm)
+        ax[1,0].imshow(torch.log10(f_image_norm))
+        f_image_norm[112,112] = 0
+        ax[1,1].imshow(f_image_norm)
+        fig.savefig(os.path.join(save_path,f'f{idx}.jpg'),bbox_inches='tight')

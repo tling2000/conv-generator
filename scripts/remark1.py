@@ -1,3 +1,4 @@
+from email.mime import base
 import os,sys
 sys.path.append('../src')
 
@@ -10,7 +11,7 @@ from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WI
 from models import ConvNet,CircuConvNet
 from coef import kernel_fft,alpha_trans
 from utils import get_logger, plot_heatmap, save_current_src,set_random,get_error,set_logger
-from dat import get_tiny_imagenet
+from dat import get_data
 
 def make_dirs(save_root):
     exp_name = "-".join([DATE, 
@@ -36,12 +37,13 @@ def plot_mean_abs(save_path,mat,name):
 
 if __name__ == '__main__':
     seed = 2
-    device = 'cuda:1'
-    sample_num = 100
+    device = 'cpu'
+    sample_num = 10
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
-    save_root = f'/data2/tangling/conv-generator/outs/remark1/som'
+    save_root = f'/data2/tangling/conv-generator/outs/remark1/'
+    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
     
     save_path = make_dirs(save_root)
     set_logger(save_path)
@@ -50,36 +52,47 @@ if __name__ == '__main__':
     save_current_src(save_path,'../src')
     save_current_src(save_path,'../scripts')
 
-    dat = get_tiny_imagenet(sample_num).to(device)
+    dat = get_data(sample_num,data_path).to(device)
 
-    conv_net = CircuConvNet(
+    conv_net = ConvNet(
         KERNEL_SIZE,
         IN_CHANNELS,
         MID_CHANNELS,
         CONV_NUM,
-        pad_mode='same',
         with_bias=WITH_BIAS,
-        with_relu=False
+        with_relu=True
     ).to(device)
     conv_net.reset_params(PARAM_MEAN,PARAM_STD)
 
     #plot1
-    som_lis = []
-    for i in range(0,50):
-        T,_ = conv_net.get_freq_trans(IMAGE_SHAPE,[0,i+1],'cpu')
-        som = torch.real(T * torch.conj(T))[0]
-        som_lis.append(som)
-    som_array = torch.concat(som_lis)
+    
+    soms_lis = []
+    for j in range(10):
+        som_lis = []
+        outputs = dat.detach()
+        conv_net.reset_params(PARAM_MEAN,PARAM_STD)
+        for i in tqdm(range(0,CONV_NUM+1)):
+            f_outputs = torch.fft.fft2(outputs)
+            som = torch.real(f_outputs * torch.conj(f_outputs))
+            som_lis.append(som[:,0].mean(0,keepdim=True).detach().cpu())
+            if i == CONV_NUM:
+                break
+            if i != 0:
+                outputs = conv_net.main[i-1].relu(outputs)
+            outputs = conv_net.main[i].conv(outputs)
+        som_array = torch.concat(som_lis)
+        soms_lis.append(som_array.unsqueeze(0))
+    soms_array = torch.concat(soms_lis).mean(0)
+    
 
-    log_som_array = torch.log10(som_array)
-    x = range(1,CONV_NUM+1)
-    fig,ax = plt.subplots()
-    # ax.set_yscale('log')
-    ax.grid(True,which="both", linestyle='--')
-    ax.set_ylabel('SOM')
-    ax.set_xlabel('layer')
-    for i in range(3):
-        for j in range(3):
-            ax.plot(x,som_array[:,i,j])
-    fig.savefig(os.path.join(save_path,'som.jpg'))
+    x = range(0,CONV_NUM+1)
+    fig,ax = plt.subplots(figsize=(6,4))
+    ax.set_yscale('log',base=10)
+    ax.grid(True, which = 'both',linestyle='--')
+    ax.set_ylabel('log SOM')
+    ax.set_xlabel('Network depth L')
+    for i,index in enumerate((0,1,2,4,8,16,32,64,112)):
+        ax.plot(x,soms_array[:,index,index],label=f'u={index},v={index}',c = 'red',alpha=1-(i/10))
+    ax.legend()
+    fig.savefig(os.path.join(save_path,'som.jpg'),bbox_inches='tight',dpi=300)
     
