@@ -13,10 +13,11 @@ def get_gaussian_2d(
     dat = torch.randn(size) * std + mean
     return dat.detach()
 
-def get_tiny_imagenet(
+def get_data(
     sample_num: int,
+    data_path: str,
     ):
-    dat = torch.load('/data2/tangling/conv-generator/data/tiny-imagenet/image.pt')
+    dat = torch.load(data_path)
     dat = dat[:sample_num]
     return dat.detach()
 

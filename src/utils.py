@@ -102,34 +102,29 @@ def get_error(true_value: np.ndarray,
     true_norm = np.linalg.norm(true_value.reshape(-1),ord=2)
     return delta_norm / true_norm
 
-def get_mean_freq_scale(image):
-    assert len(image.shape) == 3
-    H,W = image.shape
+
+def plot_fft(save_path,image,name,log_space,vmin=None,vmax=None,cbar=False):
+    assert len(image.shape) == 3,''
+    C,H,W = image.shape
     image = image.detach().cpu()
     f_image = torch.fft.fft2(image)
-    f_image = torch.fft.fftshift(f_image,dim = (-2,-1))
-    f_image_power = torch.real(f_image * torch.conj(f_image))
-    f_image_norm = f_image_power / torch.sum(f_image_power,dim=(-2,-1),keepdim=True)
-    low_freq_scale = torch.sum(f_image_norm[:,int(3*H/8):int(5*H/8)],dim=(-2,-1))
-    mean_scale = low_freq_scale.mean()
-    return mean_scale
+    f_image[0,0] = 0
+    f_image = torch.fft.fftshift(f_image,dim=(-2,-1))
+    f_image_norm = torch.abs(f_image).mean(0)
+    # f_image_power = torch.real(f_image * torch.conj(f_image))
+    # f_image_norm = f_image_power / f_image_power.sum()
+    if log_space:
+        f_image_norm = torch.log10(f_image_norm)
+        name = f'{name}_logspace'
+    plot_heatmap(save_path,f_image_norm,name,vmin=vmin,vmax=vmax,cbar=cbar)
 
-def plot_fft(save_path,image,name):
-    assert len(image.shape) == 2,''
-    H,W = image.shape
-    image = image.detach().cpu()
-    f_image = torch.fft.fft2(image)
-    # f_image[0,0] = 0
-    f_image = torch.fft.fftshift(f_image)
-    f_image_power = torch.real(f_image * torch.conj(f_image))
-    f_image_norm = f_image_power / f_image_power.sum()
-    plot_heatmap(save_path,torch.log10(f_image_norm),name,vmin=-6,vmax=0,cbar=False)
-    low_freq_scale = torch.sum(f_image_norm[int(3*H/8):int(5*H/8)])
-    return low_freq_scale
-
-def save_image(save_path,tensor,name,is_norm=False):
-    assert len(tensor.shape) == 2,''
+def save_image(save_path,tensor,name,is_norm=False,is_rgb=False):
+    assert len(tensor.shape) == 3,''
     tensor = tensor.detach().cpu()
+    if is_rgb:
+        pass
+    else:
+        tensor = tensor.mean(0)
     if is_norm:
         tensor = (tensor-tensor.min()) /(tensor.max()-tensor.min())
     if not os.path.exists(save_path):
@@ -137,3 +132,14 @@ def save_image(save_path,tensor,name,is_norm=False):
     unloader = transforms.ToPILImage()
     image = unloader(tensor)
     image.save(os.path.join(save_path,f'{name}.jpg'))
+
+def get_low_freq_scale(image):
+    assert len(image.shape) == 3
+    C,H,W = image.shape
+    image = image.detach().cpu()
+    f_image = torch.fft.fft2(image)
+    f_image = torch.fft.fftshift(f_image,dim = (-2,-1))
+    f_image_power = torch.real(f_image * torch.conj(f_image))
+    f_image_norm = f_image_power / torch.sum(f_image_power,dim=(-2,-1),keepdim=True)
+    low_freq_scale = torch.sum(f_image_norm[:,int(H/2-3):int(H/2+3),int(W/2-3):int(W/2+3)],dim=(-2,-1))
+    return low_freq_scale

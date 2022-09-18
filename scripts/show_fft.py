@@ -62,4 +62,3 @@ if __name__ == '__main__':
         plot_fft(save_path,images[idx],'f_image{}_{:.2f}'.format(idx,scale[idx]),log_space=False)
         # plot_fft(save_path,images[idx],f'f_image{idx}',log_space=True)
         save_image(save_path,images[idx],f'image{idx}',is_rgb=True)
-
