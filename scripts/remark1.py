@@ -39,6 +39,14 @@ if __name__ == '__main__':
     seed = 2
     device = 'cpu'
     sample_num = 10
+    with_relu = True
+
+    pad = KERNEL_SIZE  // 2
+    pad_mode = 'zeros'
+
+    # pad = KERNEL_SIZE - 1
+    # pad_mode = 'circular_one_side'
+
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
@@ -59,13 +67,14 @@ if __name__ == '__main__':
         IN_CHANNELS,
         MID_CHANNELS,
         CONV_NUM,
+        pad = pad,
+        pad_mode=pad_mode,
         with_bias=WITH_BIAS,
-        with_relu=True
+        with_relu=with_relu,
     ).to(device)
     conv_net.reset_params(PARAM_MEAN,PARAM_STD)
 
-    #plot1
-    
+    #get som lis
     soms_lis = []
     for j in range(10):
         som_lis = []
@@ -84,7 +93,7 @@ if __name__ == '__main__':
         soms_lis.append(som_array.unsqueeze(0))
     soms_array = torch.concat(soms_lis).mean(0)
     
-
+    #plot
     x = range(0,CONV_NUM+1)
     fig,ax = plt.subplots(figsize=(6,4))
     ax.set_yscale('log',base=10)

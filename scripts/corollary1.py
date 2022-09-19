@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT
-from models import CircuConvNet,ConvNet
+from models import ConvNet
 from coef import kernel_fft,alpha_trans
 from utils import get_logger, plot_heatmap, save_current_src,set_random,get_error,set_logger,get_cos
 from dat import get_data
@@ -31,14 +31,22 @@ def make_dirs(save_root):
 
 if __name__ == '__main__':
 
-    seed = 10
+    seed = 1000
     device = 'cuda:0'
-    sample_num = 5
+    sample_num = 3
+    with_relu = True
+
+    pad = KERNEL_SIZE  // 2
+    pad_mode = 'zeros'
+
+    # pad = KERNEL_SIZE - 1
+    # pad_mode = 'circular_one_side'
+    
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
     save_root = '/data2/tangling/conv-generator/outs/corollary1'
-    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+    data_path = '/data2/tangling/conv-generator/data/broden1_224/image_64.pt'
     save_path = make_dirs(save_root)
     set_logger(save_path)
     logger = get_logger(__name__,True)
@@ -52,8 +60,10 @@ if __name__ == '__main__':
         IN_CHANNELS,
         MID_CHANNELS,
         CONV_NUM,
+        pad = pad,
+        pad_mode=pad_mode,
         with_bias=WITH_BIAS,
-        with_relu=False,
+        with_relu=with_relu,
     ).to(device)
     conv_net.reset_params(PARAM_MEAN,PARAM_STD)
     relu = torch.nn.ReLU()
@@ -74,7 +84,8 @@ if __name__ == '__main__':
             output = conv_net.main[layer_id](output) #1*C*H*W
             f_output = torch.fft.fft2(output)[0].detach() #C*H*W
             #if relu
-            # output = relu(output)
+            if with_relu:
+                output = relu(output)
 
             #cal
             T,beta = conv_net.get_freq_trans(IMAGE_SHAPE,(0,layer_id+1),device)

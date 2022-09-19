@@ -18,6 +18,8 @@ def get_data(
     data_path: str,
     ):
     dat = torch.load(data_path)
+    if sample_num == None:
+        return dat.detach()
     dat = dat[:sample_num]
     return dat.detach()
 
@@ -56,7 +58,7 @@ def create_data(
 
 if __name__ == '__main__':
     create_data(
-        (14,14),
+        (64,64),
         None,
         '/data2/tangling/conv-generator/data/broden1_224/images/dtd',
         '/data2/tangling/conv-generator/data/broden1_224'

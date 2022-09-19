@@ -9,10 +9,10 @@ from PIL import Image
 from torchvision import transforms
 
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT
-from models import ConvNet,CircuConvNet
+from models import ConvNet
 from coef import kernel_fft,alpha_trans
 from utils import get_logger, plot_heatmap, save_current_src,set_random,get_error,set_logger,plot_fft,save_image
-from dat import get_tiny_imagenet
+from dat import get_data
 
 def make_dirs(save_root):
     exp_name = "-".join([DATE, 
@@ -32,13 +32,24 @@ def make_dirs(save_root):
 
 
 if __name__ == '__main__':
-    seed = 1
-    device = 'cuda:1'
-    sample_num = 10
+    seed = 2
+    device = 'cpu'
+    sample_num = None
+    with_relu = True
+
+    pad = KERNEL_SIZE  // 2
+    pad_mode = 'zeros'
+
+    # pad = KERNEL_SIZE - 1
+    # pad_mode = 'circular_one_side'
+
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
-    save_root = f'/data2/tangling/conv-generator/outs/remark2'
+    save_root = f'/data2/tangling/conv-generator/outs/remark2/'
+    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+
+    trace_id = [391,1328,1438,2393,2914,3035,4497,5600]
     
     save_path = make_dirs(save_root)
     set_logger(save_path)
@@ -47,29 +58,36 @@ if __name__ == '__main__':
     save_current_src(save_path,'../src')
     save_current_src(save_path,'../scripts')
 
-    dat = get_tiny_imagenet(sample_num).to(device)
+    dat = get_data(sample_num,data_path).to(device)
 
     conv_net = ConvNet(
         KERNEL_SIZE,
         IN_CHANNELS,
         MID_CHANNELS,
         CONV_NUM,
+        pad = pad,
+        pad_mode=pad_mode,
         with_bias=WITH_BIAS,
-        with_relu=True
+        with_relu=with_relu,
     ).to(device)
     conv_net.reset_params(PARAM_MEAN,PARAM_STD)
 
-    inputs = dat.detach()
+    inputs = dat[trace_id].detach()
     outputs = inputs.clone().detach()
-    for j in range(10):
-        image = inputs[j].mean(0).detach()
-        save_image(os.path.join(save_path,f'output{j}'),image,'input')
-        plot_fft(os.path.join(save_path,f'f_output{j}'),image,'input')
-    for i in range(CONV_NUM):
-        outputs = conv_net.main[i](outputs)
-        if (i+1) % 5 == 0:
-            for j in range(10):
-                image = outputs[j].mean(0).detach()
-                save_image(os.path.join(save_path,f'output{j}'),image,f'layer{i+1}')
-                plot_fft(os.path.join(save_path,f'f_output{j}'),image,f'layer{i+1}')
+    for sample_id in range(len(inputs)):
+        image = inputs[sample_id].detach()
+        save_image(os.path.join(save_path,f'output{sample_id}'),image,'input',is_norm=True,is_rgb=True)
+        plot_fft(os.path.join(save_path,f'f_output{sample_id}'),image,'input',log_space=False)
+    for layer_id in range(CONV_NUM):
+        outputs = conv_net.main[layer_id](outputs)
+        if (layer_id+1) % 5 == 0:
+            for sample_id in range(len(inputs)):
+                image = outputs[sample_id].detach()
+                if layer_id == CONV_NUM - 1:
+                    save_image(os.path.join(save_path,f'output{sample_id}'),image,f'layer{layer_id+1}',is_norm=True,is_rgb=True)
+                    plot_fft(os.path.join(save_path,f'f_output{sample_id}'),image,f'layer{layer_id+1}',log_space=False)
+                else:
+                    save_image(os.path.join(save_path,f'output{sample_id}'),image,f'layer{layer_id+1}',is_norm=True,is_rgb=False)
+                    plot_fft(os.path.join(save_path,f'f_output{sample_id}'),image,f'layer{layer_id+1}',log_space=False)
+
 
