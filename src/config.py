@@ -7,7 +7,7 @@ MOMENT = str(datetime.now().hour).zfill(2)+str(datetime.now().minute).zfill(2) +
     str(datetime.now().second).zfill(2)
 
 KERNEL_SIZE = 3
-IMAGE_SHAPE = (14,14)
+IMAGE_SHAPE = (224,224)
 
 IN_CHANNELS = 3
 MID_CHANNELS = 16

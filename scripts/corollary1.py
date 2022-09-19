@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT
-from models import CircuConvNet
+from models import CircuConvNet,ConvNet
 from coef import kernel_fft,alpha_trans
 from utils import get_logger, plot_heatmap, save_current_src,set_random,get_error,set_logger,get_cos
 from dat import get_data
@@ -31,14 +31,14 @@ def make_dirs(save_root):
 
 if __name__ == '__main__':
 
-    seed = 2
+    seed = 10
     device = 'cuda:0'
-    sample_num = 1
+    sample_num = 5
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
     save_root = '/data2/tangling/conv-generator/outs/corollary1'
-    data_path = '/data2/tangling/conv-generator/data/broden1_224/image_14.pt'
+    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
     save_path = make_dirs(save_root)
     set_logger(save_path)
     logger = get_logger(__name__,True)
@@ -47,12 +47,11 @@ if __name__ == '__main__':
     save_current_src(save_path,'../scripts')
 
     # init the conv net
-    conv_net = CircuConvNet(
+    conv_net = ConvNet(
         KERNEL_SIZE,
         IN_CHANNELS,
         MID_CHANNELS,
         CONV_NUM,
-        pad_mode='same',
         with_bias=WITH_BIAS,
         with_relu=False,
     ).to(device)

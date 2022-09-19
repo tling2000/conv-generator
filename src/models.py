@@ -27,6 +27,7 @@ class CircuConv(nn.Module):
         self.with_relu = with_relu
         self.conv = nn.Conv2d(in_channels=in_channels,out_channels=out_channels,kernel_size=kernel_size,stride=1,bias=with_bias)
         self.relu = nn.ReLU()
+        
 
     def forward(self,x):
         x = F.pad(x,(0,self.pad,0,self.pad),mode='circular')
@@ -159,6 +160,7 @@ class ConvNet(nn.Module):
         super(ConvNet,self).__init__()
         assert conv_num >= 0,'the block num must larger than 0'
         pad = (kernel_size-1)//2
+        self.with_bias = with_bias
 
         if conv_num == 1:
             self.main = nn.Sequential(
@@ -178,6 +180,48 @@ class ConvNet(nn.Module):
     def reset_params(self,mean,std):
         for layer_name,layer in self.named_parameters():
             self.fixed_normal_(layer,mean,std)
+
+    def get_freq_trans(
+        self,
+        image_shape: list,
+        lidx: list,
+        device: str
+        )->list:
+
+        H,W = image_shape
+        # if we only want know single layer
+        if type(lidx) == int:
+            weight = self.main[lidx].conv.weight.detach()
+            f_weight =  kernel_fft(weight,image_shape,device)
+            if not self.with_bias:
+                return f_weight.detach(),None
+            bias = self.main[lidx].conv.bias.detach()
+            f_bias = (bias * H * W).to(device)
+            return f_weight.detach() ,f_bias.detach()
+        
+        # else 
+        weight = self.main[lidx[0]].conv.weight.detach()
+        f_weight = kernel_fft(weight,image_shape,device)
+        T =  f_weight
+
+        if self.with_bias:
+            bias = self.main[lidx[0]].conv.bias.detach()
+            f_bias = (bias * H * W).to(device)
+            beta = f_bias
+    
+        for layer_id in range(lidx[0]+1,lidx[1]):
+            weight = self.main[layer_id].conv.weight.detach()
+            f_weight = kernel_fft(weight,image_shape,device)
+            T = (f_weight.permute((2,3,0,1)) @ T.permute((2,3,0,1))).permute((2,3,0,1))
+
+            if self.with_bias:
+                bias = self.main[layer_id].conv.bias.detach()
+                f_bias = (bias * H * W).to(device)
+                beta = f_bias + torch.real(f_weight[:,:,0,0]) @ beta
+
+        if not self.with_bias:
+            return T.detach(),None
+        return T.detach(),beta.detach()
 
     def forward(self,x):
         return self.main(x)

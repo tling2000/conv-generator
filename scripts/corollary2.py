@@ -29,7 +29,7 @@ def make_dirs(save_root):
     return save_path
 
 if __name__ == '__main__':
-    seed = 0
+    seed = 10
     device = 'cuda:0'
     sample_num = 100
     K = KERNEL_SIZE
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         CONV_NUM,
         pad_mode='same',
         with_bias=WITH_BIAS,
-        with_relu=False,
+        with_relu=True,
     ).to(device)
     conv_net.reset_params(PARAM_MEAN,PARAM_STD)
 
@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
             cal_f_weight_grad =  torch.transpose(cal_f_weight_grad,0,1)
             error = get_error(f_weight_grad.cpu().numpy(),cal_f_weight_grad.cpu().numpy())
-            cos = get_cos(f_weight_grad.cpu().numpy(),cal_f_weight_grad.cpu().numpy(),dims=(-2,-1))
+            cos = get_cos(f_weight_grad.cpu().numpy(),cal_f_weight_grad.cpu().numpy(),dims=(0,1))
             error_lis[sample_id].append(error)
             cos_lis[sample_id].append(cos)
 

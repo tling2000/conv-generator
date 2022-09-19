@@ -99,6 +99,7 @@ def get_error(
         true_value: np.ndarray,
         cal_value: np.ndarray,
         ):
+    true_value,cal_value = np.abs(true_value),np.abs(cal_value)
     delta = true_value - cal_value
     delta_norm = np.linalg.norm(delta.reshape(-1),ord=2)
     true_norm = np.linalg.norm(true_value.reshape(-1),ord=2)
@@ -115,6 +116,7 @@ def get_cos(
     num = np.sum((true_value * cal_value),axis=dims)
     denom = np.sqrt(np.sum(true_value**2,axis=dims)) * np.sqrt(np.sum(cal_value**2,axis=dims))
     cos = num / denom
+    cos [denom == 0] = 0
     # cos = cos[denom!=0]
     return cos.mean()
 
