@@ -28,7 +28,8 @@ def create_data(
     save_path: str,
     ):
     data_transform = transforms.Compose([
-        transforms.Resize(img_shape),
+        transforms.CenterCrop(img_shape[0]),
+        # transforms.Resize(img_shape),
         transforms.ToTensor(),
     ])
     
@@ -50,5 +51,13 @@ def create_data(
                     break
 
     Xs = torch.stack(data_list).detach()
-    torch.save(Xs,os.path.join(save_path,'image.pt'))
+    torch.save(Xs,os.path.join(save_path,f'image_{img_shape[0]}.pt'))
     return True
+
+if __name__ == '__main__':
+    create_data(
+        (14,14),
+        None,
+        '/data2/tangling/conv-generator/data/broden1_224/images/dtd',
+        '/data2/tangling/conv-generator/data/broden1_224'
+    )

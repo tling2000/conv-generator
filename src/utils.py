@@ -114,9 +114,9 @@ def get_cos(
     true_value,cal_value = np.abs(true_value),np.abs(cal_value)
     num = np.sum((true_value * cal_value),axis=dims)
     denom = np.sqrt(np.sum(true_value**2,axis=dims)) * np.sqrt(np.sum(cal_value**2,axis=dims))
-    return (num / denom).mean()
-
-
+    cos = num / denom
+    # cos = cos[denom!=0]
+    return cos.mean()
 
 
 def plot_fft(save_path,image,name,log_space,vmin=None,vmax=None,cbar=False):

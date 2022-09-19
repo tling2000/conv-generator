@@ -31,14 +31,14 @@ def make_dirs(save_root):
 
 if __name__ == '__main__':
 
-    seed = 0
-    device = 'cuda:1'
-    sample_num = 50
+    seed = 2
+    device = 'cuda:0'
+    sample_num = 1
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
     save_root = '/data2/tangling/conv-generator/outs/corollary1'
-    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+    data_path = '/data2/tangling/conv-generator/data/broden1_224/image_14.pt'
     save_path = make_dirs(save_root)
     set_logger(save_path)
     logger = get_logger(__name__,True)
@@ -71,14 +71,15 @@ if __name__ == '__main__':
         f_input = torch.fft.fft2(input)[0].detach() #C*H*W
         output = input.detach()
 
-        for conv_id in range(CONV_NUM):
-            output = conv_net.main[conv_id](output) #1*C*H*W
+        for layer_id in range(CONV_NUM):
+            output = conv_net.main[layer_id](output) #1*C*H*W
             f_output = torch.fft.fft2(output)[0].detach() #C*H*W
-            output = relu(output)
+            #if relu
+            # output = relu(output)
 
             #cal
-            T,beta = conv_net.get_freq_trans(IMAGE_SHAPE,(0,conv_id+1),device)
-            if conv_id == CONV_NUM-1:
+            T,beta = conv_net.get_freq_trans(IMAGE_SHAPE,(0,layer_id+1),device)
+            if layer_id == CONV_NUM-1:
                 cal_f_output = torch.zeros((IN_CHANNELS,H,W),dtype=torch.complex64,device=device) #C*H*W
             else:
                 cal_f_output = torch.zeros((MID_CHANNELS,H,W),dtype=torch.complex64,device=device) #C*H*W
@@ -91,8 +92,8 @@ if __name__ == '__main__':
 
             #get error
             error = get_error(f_output.cpu().numpy(),cal_f_output.cpu().numpy())
-            error_lis[sample_id].append(error)
             cos = get_cos(f_output.cpu().numpy(),cal_f_output.cpu().numpy(),dims=(-2,-1))
+            error_lis[sample_id].append(error)
             cos_lis[sample_id].append(cos)
     
     mean_error = np.array(error_lis).mean(0)
