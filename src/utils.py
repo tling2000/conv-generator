@@ -61,11 +61,11 @@ def plot_heatmap(save_path: str,
         None
     """
     assert (vmin is None) == (vmax is None), "vmin and vmax must be both None or not None"
-    if cbar:
-        fig, ax = plt.subplots(figsize=(3,2.4))
-    else:
-        fig, ax = plt.subplots(figsize=(3,3))
-
+    # if cbar:
+    #     fig, ax = plt.subplots(figsize=(3,2.4))
+    # else:
+    #     fig, ax = plt.subplots(figsize=(3,3))
+    fig, ax = plt.subplots()
     if col == "coolwarm": 
         ax = sns.heatmap(mat, annot=False, cbar=cbar, cmap = col, vmin = vmin, vmax = vmax) 
     else: 
@@ -125,9 +125,10 @@ def plot_fft(save_path,image,name,log_space,vmin=None,vmax=None,cbar=False):
     C,H,W = image.shape
     image = image.detach().cpu()
     f_image = torch.fft.fft2(image)
-    f_image[0,0] = 0
+    # f_image[:,0,0] = 0
     f_image = torch.fft.fftshift(f_image,dim=(-2,-1))
     f_image_norm = torch.abs(f_image).mean(0)
+    # f_image_norm = f_image_norm[int(H/2-H/8):int(H/2+H/8),int(W/2-W/8):int(W/2+H/8)]
     # f_image_power = torch.real(f_image * torch.conj(f_image))
     # f_image_norm = f_image_power / f_image_power.sum()
     if log_space:

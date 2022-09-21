@@ -1,7 +1,7 @@
-from xml.etree.ElementTree import PI
 import torch
 from torchvision import transforms
 import os
+import numpy as np
 from PIL import Image
 
 def get_gaussian_2d(
@@ -56,10 +56,24 @@ def create_data(
     torch.save(Xs,os.path.join(save_path,f'image_{img_shape[0]}.pt'))
     return True
 
+def create_cifar_data(
+    data_path,
+    save_path,
+    ):
+    import pickle
+    with open(data_path,'rb') as fo:
+        dict = pickle.load(fo,encoding='bytes')
+    Xs = dict[b'data']
+    Xs = Xs.reshape(len(Xs),3,32,32)
+    Xs = Xs.astype(np.float32)/255
+    Xs = torch.from_numpy(Xs)
+    torch.save(Xs,os.path.join(save_path,f'image.pt'))
+    return True
+
+
+
 if __name__ == '__main__':
-    create_data(
-        (64,64),
-        None,
-        '/data2/tangling/conv-generator/data/broden1_224/images/dtd',
-        '/data2/tangling/conv-generator/data/broden1_224'
+    create_cifar_data(
+        '/data2/tangling/conv-generator/data/cifar-10-batches-py/data_batch_1',
+        '/data2/tangling/conv-generator/data/cifar-10-batches-py'
     )
