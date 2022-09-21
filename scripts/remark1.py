@@ -53,14 +53,14 @@ if __name__ == '__main__':
 
     save_root = f'/data2/tangling/conv-generator/outs/remark1/'
 
-    data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
-    trace_index = (0,1,2,4,8,16)
+    # data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
+    # trace_index = (0,1,2,4,8,16)
 
     # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/image.pt'
     # trace_index = (0,1,2,4,8,16,32)
 
-    # data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
-    # trace_index = (0,1,2,4,8,16,32,64,112)
+    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+    trace_index = (0,1,2,4,8,16,32,64,112)
 
     
     save_path = make_dirs(save_root)
@@ -107,13 +107,15 @@ if __name__ == '__main__':
     
     #plot
     x = range(1,CONV_NUM+1)
-    fig,ax = plt.subplots(figsize=(4,3))
-    ax.set_yscale('log',base=10)
+    fig,ax = plt.subplots(figsize=(3,2.6))
+    # ax.set_yscale('log',base=10)
     ax.grid(True, which = 'both',linestyle='--')
-    ax.set_ylabel(r'log SOM($\mathbf{h}^{(uv)}$)')
-    ax.set_xlabel('Network depth L')
+    ax.set_ylabel(r'log SOM($\mathbf{h}^{(uv)}$)',fontdict={'size':16})
+    ax.set_xlabel('Network depth L',fontdict={'size':16})
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
     for i,index in enumerate(trace_index):
-        ax.plot(x,soms_array[:,index,index],label=f'u=v={index}',c='red',alpha=1-(i/(len(trace_index)+2)))
+        ax.plot(x,torch.log10(soms_array[:,index,index]),label=f'u=v={index}',c='red',alpha=1-(i/(len(trace_index)+2)))
     ax.legend(loc=2)
     fig.savefig(os.path.join(save_path,'som.jpg'),bbox_inches='tight',dpi=300)
     

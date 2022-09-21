@@ -89,17 +89,7 @@ def get_fft(image,vmin=None,vmax=None):
     f_image_norm = (f_image_norm-f_image_norm.min()) /(f_image_norm.max()-f_image_norm.min())
     return f_image_norm
 
-def get_mean_low_freq_scale(image):
-    assert len(image.shape) == 4
-    N,C,H,W = image.shape
-    image = image.detach().cpu()
-    f_image = torch.fft.fft2(image)
-    # f_image[:,:,0,0] = 0
-    f_image = torch.fft.fftshift(f_image,dim = (-2,-1))
-    f_image_power = torch.mean(torch.abs(f_image)**2,dim=(1))
-    f_image_norm = f_image_power / torch.sum(f_image_power,dim=(-2,-1),keepdim=True)
-    low_freq_scale = torch.sum(f_image_norm[:,int(H/2-H/16):int(H/2+H/16),int(W/2-W/16):int(W/2+H/16)],dim=(-2,-1))
-    return low_freq_scale
+
 
 if __name__ == '__main__':
     seed = 1
