@@ -1,4 +1,7 @@
+from base64 import decode, encode
+from turtle import forward
 import torch.nn.functional as F
+from torchvision.models import resnet18,vgg16,vgg16_bn
 
 import torch
 import torch.nn as nn
@@ -155,16 +158,84 @@ class ToyAE(nn.Module):
         x = self.decode(x)
         return x
 
+class ConvAE(nn.Module):
+    def __init__(
+        self,
+        encode_net: str,
+        pretrained: bool,
+        image_shape: list,
+        ) -> None:
+        super(ConvAE,self).__init__()
+        assert encode_net in ['vgg16','vgg16_bn','resnet18']
+        H,W = image_shape
+        assert H in [32,64,224],'only few shape is supported'
+
+        if encode_net == 'vgg16':
+            self.encode = vgg16(pretrained=pretrained)
+        elif encode_net == 'vgg16_bn':
+            self.encode = vgg16_bn(pretrained=pretrained)
+        elif encode_net == 'resnet18':
+            self.encode = resnet18(pretrained=pretrained)
+        else:
+            raise RuntimeError()
+
+        mid_dim = 1024
+        temp_dim = mid_dim
+        modules = []
+        modules.append(nn.ConvTranspose2d(1000, mid_dim, 4, 1, 0, bias=True)) #(mid_dim,4,4)
+        modules.append(nn.BatchNorm2d(mid_dim))
+        modules.append(nn.ReLU())
+        
+        if H == 32:
+            for i in range(3):
+                modules.append(nn.ConvTranspose2d(temp_dim, temp_dim // 2, 4, 2, 1, bias=True)) #(mid_dim,4,4)
+                modules.append(nn.BatchNorm2d(temp_dim // 2))
+                modules.append(nn.ReLU())
+                temp_dim = temp_dim // 2 
+            modules.append(nn.Conv2d(temp_dim, 3, 3, 1, 1, bias=True))
+
+        elif H == 64:
+            for i in range(4):
+                modules.append(nn.ConvTranspose2d(temp_dim, temp_dim // 2, 4, 2, 1, bias=True)) #(mid_dim,4,4)
+                modules.append(nn.BatchNorm2d(temp_dim // 2))
+                modules.append(nn.ReLU())
+                temp_dim = temp_dim // 2 
+            modules.append(nn.Conv2d(temp_dim, 3, 3, 1, 1, bias=True))
+
+
+        elif H == 224:
+            modules.append(nn.ConvTranspose2d(temp_dim, temp_dim // 2, 3, 2, 1 , bias=True)) #(mid_dim,4,4)
+            modules.append(nn.BatchNorm2d(temp_dim // 2))
+            modules.append(nn.ReLU())
+            temp_dim = temp_dim // 2 
+            for i in range(5):
+                modules.append(nn.ConvTranspose2d(temp_dim, temp_dim // 2, 4, 2, 1, bias=True)) #(mid_dim,4,4)
+                modules.append(nn.BatchNorm2d(temp_dim // 2))
+                modules.append(nn.ReLU())
+                temp_dim = temp_dim // 2 
+            modules.append(nn.Conv2d(temp_dim, 3, 3, 1, 1, bias=True))
+
+
+        self.decode = nn.Sequential(*modules)
+
+    def forward(self,x):
+        x = self.encode(x)
+        x = x.view(-1,1000,1,1)
+        x = self.decode(x)
+        return x
+
+
 if __name__ == '__main__':
-    model = ConvNet(
-        KERNEL_SIZE,
-        IN_CHANNELS,
-        MID_CHANNELS,
-        CONV_NUM,
-        with_bias=True,
+    input = torch.randn(10,3,64,64)
+    net = ConvAE(
+        encode_net='vgg16',
+        pretrained=True,
+        image_shape=(64,64)
     )
-    model.reset_params(0.1,0.3)
-    model.get_freq_trans((64,64),(0,3),'cpu')
+    output = net(input)
+    print(net)
+
+
     # a = torch.randn((3,3,2,4))
     # b = torch.randn((3,3,4,6))
     # c = torch.matmul(a,b)

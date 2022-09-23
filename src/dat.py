@@ -73,7 +73,13 @@ def create_cifar_data(
 
 
 if __name__ == '__main__':
-    create_cifar_data(
-        '/data2/tangling/conv-generator/data/cifar-10-batches-py/data_batch_1',
-        '/data2/tangling/conv-generator/data/cifar-10-batches-py'
+    # create_cifar_data(
+    #     '/data2/tangling/conv-generator/data/cifar-10-batches-py/data_batch_1',
+    #     '/data2/tangling/conv-generator/data/cifar-10-batches-py'
+    # )
+    create_data(
+        (64,64),
+        None,
+        data_path='/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled',
+        save_path='/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled'
     )

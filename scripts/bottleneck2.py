@@ -30,8 +30,8 @@ def make_dirs(save_root):
 if __name__ == '__main__':
     seed = 0
     device = 'cuda:1'
-    sample_num = 1000
-    bs = 250
+    sample_num = 2000
+    bs = 500
     lr = 0.0001
     rounds = 50
     K = KERNEL_SIZE
@@ -45,9 +45,9 @@ if __name__ == '__main__':
     #     trace_ids.append(i)
     # insert_pixcel = 1
 
-    data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/image.pt'
-    trace_ids = [11,17,28,39,47,68,69,73,79,81]
-    for i in range(500,1000,10):
+    data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled/image_64.pt'
+    trace_ids = []
+    for i in range(0,2000,20):
         trace_ids.append(i)
     insert_pixcel = 3
 

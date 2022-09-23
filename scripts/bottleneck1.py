@@ -7,11 +7,11 @@ from tqdm import tqdm
 from torchvision import transforms
 
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_UPSAMPLE,WITH_BIAS,DATE,MOMENT
-from models import ToyAE
+from models import ConvAE
 from coef import kernel_fft,alpha_trans
 from utils import get_logger, plot_heatmap, save_current_src,set_random,get_error,set_logger
-from dat import get_gaussian_2d,get_tiny_imagenet
-from train import train
+from dat import get_gaussian_2d,get_data
+from train import train2
 
 def make_dirs(save_root):
     exp_name = "-".join([DATE, 
@@ -29,15 +29,40 @@ def make_dirs(save_root):
 
 if __name__ == '__main__':
     seed = 0
-    device = 'cuda:1'
-    bs = 100
+    device = 'cuda:2'
+    sample_num = 2000
+    bs = 200
     lr = 0.0001
-    rounds = 50
+    rounds = 400
     K = KERNEL_SIZE
-    H,W = IMAGE_SHAPE
+    
 
     save_root = f'/data2/tangling/conv-generator/outs/bottleneck1'
+
+    data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
+    H,W = 32,32
+    trace_ids = []
+    for i in range(0,1000,10):
+        trace_ids.append(i)
+    insert_pixcel = 1
+
+    # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled/image_64.pt'
+    # H,W = 64,64
+    # trace_ids = []
+    # for i in range(0,2000,20):
+    #     trace_ids.append(i)
+    # insert_pixcel = 3
+
+    # data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+    # insert_pixcel = 10
+    # H,W = 224,224
+    # trace_ids = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391]
+    # trace_ids = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391,1328,1438,2393,2914,3035,4497,5600]
+    # for i in range(500,1000,10):
+    #     trace_ids.append(i)
     
+
+
     save_path = make_dirs(save_root)
     set_logger(save_path)
     logger = get_logger(__name__,True)
@@ -45,18 +70,15 @@ if __name__ == '__main__':
     save_current_src(save_path,'../src')
     save_current_src(save_path,'../scripts')
 
-    conv_ae = ToyAE(
-        KERNEL_SIZE,
-        IN_CHANNELS,
-        MID_CHANNELS,
-        WITH_UPSAMPLE,
-        WITH_BIAS,
+    conv_ae = ConvAE(
+        'vgg16_bn',
+        pretrained=True,
+        image_shape=(H,W)
     )
-    # conv_net.reset_params(PARAM_MEAN,PARAM_STD)
 
-    dat = get_tiny_imagenet(1000)
+    dat = get_data(sample_num,data_path)
     Xs = dat.detach()
-    train(
+    train2(
         conv_ae,
         Xs,
         save_path,
@@ -64,5 +86,8 @@ if __name__ == '__main__':
         batch_size=bs,
         lr=lr,
         device=device,
+        trace_ids=trace_ids,
+        insert_pixcel=insert_pixcel
     )
+
 
