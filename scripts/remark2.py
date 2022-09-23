@@ -14,7 +14,7 @@ from torchvision import transforms
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT
 from models import ConvNet
 from coef import kernel_fft,alpha_trans
-from utils import get_logger, save_current_src,set_random,get_error,set_logger,save_image,get_fft,get_low_freq_scale
+from utils import get_logger, save_current_src,set_random,get_error,set_logger,save_image,get_fft,plot_sub_heatmap
 from dat import get_data
 
 def make_dirs(save_root):
@@ -37,32 +37,6 @@ def get_tensor(tensor,):
     tensor = tensor.mean(0)
     tensor = (tensor-tensor.min()) /(tensor.max()-tensor.min())
     return tensor
-
-def plot_heatmap(save_path: str, 
-                 mats: list, 
-                 name: str, 
-                 vmin: int = None, 
-                 vmax: int = None,
-                 cbar: bool = True,
-                 ) -> None: 
-    assert (vmin is None) == (vmax is None), "vmin and vmax must be both None or not None"
-
-    feature_num = len(mats)
-    fig, ax = plt.subplots(1,feature_num,figsize=(feature_num*4,4))
-    for i in range(feature_num):
-        sns.heatmap(mats[i], annot=False, cbar=cbar, cmap = 'coolwarm', vmin = vmin, vmax = vmax,ax=ax[i]) 
-        ax[i].set_axis_off()  
-    # ax.set_title(name) 
-    # plt.axis('off')
-    fig.tight_layout()
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    if vmin is None:
-        path = os.path.join(save_path, f"{name}.png")
-    else:
-        path = os.path.join(save_path, "{}_{:.4f}to{:.4f}.png".format(name, vmin, vmax)) 
-    fig.savefig(path,dpi=300) 
-    plt.close()
 
 
 if __name__ == '__main__':
@@ -147,5 +121,5 @@ if __name__ == '__main__':
             
         out = torch.concat(out_list[sample_id],dim=2)
         save_image(save_path,out,f'out_{trace_id[sample_id]}',is_rgb=True)
-        plot_heatmap(save_path,f_out_list[sample_id],f'f_out_{trace_id[sample_id]}',cbar=False)
+        plot_sub_heatmap(save_path,f_out_list[sample_id],f'f_out_{trace_id[sample_id]}',cbar=False)
 

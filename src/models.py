@@ -120,7 +120,6 @@ class ToyAE(nn.Module):
         kernel_size : int,
         in_channels: int,
         mid_channels: int,
-        conv_num: int,
         with_upsample: bool,
         with_bias: bool,
         ) -> None:

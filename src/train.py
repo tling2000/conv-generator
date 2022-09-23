@@ -2,11 +2,11 @@ import os
 import torch
 import torch.nn as nn
 import numpy as np
-from utils import get_logger, plot_heatmap,plot_fft,save_image
+from utils import get_logger, plot_heatmap,save_image,plot_sub_heatmap,get_fft,get_tensor
 import pandas as pd
-from config import IMAGE_SHAPE,KERNEL_SIZE
 from tqdm import tqdm
 from matplotlib import pyplot as plt
+from hook import Hook
 
 def train(
     model: nn.Module,
@@ -16,21 +16,46 @@ def train(
     batch_size: int,
     lr: float,
     device: str,
+    trace_ids: list,
     ):
-
-    N,C,H,W = Xs.size()
 
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     logger = get_logger(save_path)
     
+    #basic settings
+    N,C,H,W = Xs.size()
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(),lr=lr)
     criterion = nn.MSELoss()
 
-    losses = []
-    trace_idx =  [0,1,2,3,4]
+    #hook on the model
+    layer_names = [
+        'decode/0',
+        'decode/2',
+        'decode/4',
+    ]
+    hook = Hook(model,layer_names)
 
+    # outputs_dict = {}
+    # inputs_dict = {}
+    # for trace_id in trace_ids:
+    #     inputs_dict[f'sample{trace_id}'] = Xs[trace_id].detach()
+    #     outputs_dict[f'sample{trace_id}'] = {}
+    #     for layer_name in layer_names:
+    #         outputs_dict[f'sample{trace_id}'][layer_name] = []
+
+    for trace_id in trace_ids:
+        image = Xs[trace_id].detach()
+        f_out = get_fft(image,no_basis=False,is_cut=False)
+        f_out_nozero = get_fft(image,no_basis=True,is_cut=False)
+        save_image(os.path.join(save_path,'results'),image,f'sample{trace_id}_image',is_rgb=True)
+        save_image(os.path.join(save_path,'results_nozero'),image,f'sample{trace_id}_image',is_rgb=True)
+        plot_sub_heatmap(os.path.join(save_path,'results'),[f_out],f'sample{trace_id}_spectrum')
+        plot_sub_heatmap(os.path.join(save_path,'results_nozero'),[f_out_nozero],f'sample{trace_id}_spectrum')
+
+    #train
+    losses = []
     model.train()
     for rnd in range(rounds):
         indexs = np.arange(N)
@@ -50,23 +75,49 @@ def train(
 
             logger.info(f'batch loss: {bloss.item()}')
             loss += bloss.item()/batch_num
-            for trace_id  in trace_idx:
-                if trace_id in batch:
-                    trace_batch_id  = np.argwhere(batch==trace_id)[0][0]
 
-                    if rnd == 0:
-                        X_hat = X_bs[trace_batch_id].mean(0).detach()
-                        save_image(os.path.join(save_path,f'trace_{trace_id}'),X_hat,f'X_hat',False)
-                        plot_fft(os.path.join(save_path,f'trace_{trace_id}'),X_hat,f'f_X_hat')
-                    if rnd % 1 == 0:
-                        X_pre = X_bs_pre[trace_batch_id].mean(0).detach()
-                        save_image(os.path.join(save_path,f'trace_{trace_id}'),X_pre,f'X_pre_rnd{rnd}',False)
-                        plot_fft(os.path.join(save_path,f'trace_{trace_id}'),X_pre,f'f_X_pre{rnd}')
+            #trace the samples
+            insert_pixcel = 1
+
+            features_dict = hook.get_features()
+            for trace_id  in trace_ids:
+                if trace_id in batch:
+
+                    outs = []
+                    f_outs = []
+                    f_outs_nozero = []
+
+                    trace_batch_id  = np.argwhere(batch==trace_id)[0][0]
+                    for layer_name in features_dict.keys():
+
+                        image = torch.from_numpy(features_dict[layer_name][trace_batch_id])
+                        image = torch.repeat_interleave(get_tensor(image).unsqueeze(0),repeats=3,dim=0)
+                        image_temp = torch.zeros(3,H,W)
+                        scale = H // image.shape[1]
+                        for i in range(scale):
+                            for j in range(scale):
+                                image_temp[:,i::scale,j::scale] = image
+
+                        outs.append(image_temp)
+                        outs.append(torch.ones((3,H,insert_pixcel)))
+
+                        f_out = get_fft(image,no_basis=False,is_cut=False)
+                        f_out_nozero = get_fft(image,no_basis=True,is_cut=False)
+                        f_outs.append(f_out)
+                        f_outs_nozero.append(f_out_nozero)
+
+                    out = torch.concat(outs,dim=2)
+                    save_image(os.path.join(save_path,'results'),out,f'epoch{rnd}-sample{trace_id}-uptime',is_rgb=True)
+                    save_image(os.path.join(save_path,'results_nozero'),out,f'epoch{rnd}-sample{trace_id}-uptime',is_rgb=True)
+
+                    plot_sub_heatmap(os.path.join(save_path,'results'),f_outs,f'epoch{rnd}-sample{trace_id}-upspec',cbar=False)
+                    plot_sub_heatmap(os.path.join(save_path,'results_nozero'),f'epoch{rnd}-sample{trace_id}-upspec',cbar=False)
+
         #register the loss
         losses.append(loss)
 
         #plot the heatmap
-        if rnd % 20 == 0 or rnd == rounds-1:
+        if rnd == rounds-1:
             model_path = os.path.join(save_path,'model')
             if not os.path.exists(model_path):
                 os.makedirs(model_path)
@@ -76,4 +127,3 @@ def train(
     ax.plot(range(1,rounds+1),losses)
     fig.savefig(os.path.join(save_path,'loss.jpg'))
     np.save(os.path.join(save_path,'losses.npy'),np.array(losses))
-

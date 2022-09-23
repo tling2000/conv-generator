@@ -82,6 +82,30 @@ def plot_heatmap(save_path: str,
     fig.savefig(path,dpi=300) 
     plt.close()
 
+def plot_sub_heatmap(save_path: str, 
+                 mats: list, 
+                 name: str, 
+                 vmin: int = None, 
+                 vmax: int = None,
+                 cbar: bool = True,
+                 ) -> None: 
+    assert (vmin is None) == (vmax is None), "vmin and vmax must be both None or not None"
+
+    feature_num = len(mats)
+    fig, ax = plt.subplots(1,feature_num,figsize=(feature_num*4,4))
+    for i in range(feature_num):
+        sns.heatmap(mats[i], annot=False, cbar=cbar, cmap = 'coolwarm', vmin = vmin, vmax = vmax,ax=ax[i]) 
+        ax[i].set_axis_off()  
+    fig.tight_layout()
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    if vmin is None:
+        path = os.path.join(save_path, f"{name}.png")
+    else:
+        path = os.path.join(save_path, "{}_{:.4f}to{:.4f}.png".format(name, vmin, vmax)) 
+    fig.savefig(path,dpi=300) 
+    plt.close()
+
 def save_current_src(save_path: str,
                      src_path: str) -> None:
     """save the current src.
@@ -120,12 +144,13 @@ def get_cos(
     # cos = cos[denom!=0]
     return cos.mean()
 
-def get_fft(image,is_cut,cut_scale=None):
+def get_fft(image,no_basis,is_cut,cut_scale=None):
     assert len(image.shape) == 3,''
     C,H,W = image.shape
     image = image.detach().cpu()
     f_image = torch.fft.fft2(image)
-    f_image[:,0,0] = 0
+    if no_basis:
+        f_image[:,0,0] = 0
     f_image = torch.fft.fftshift(f_image,dim=(-2,-1))
     f_image_norm = torch.abs(f_image).mean(0)
     
@@ -135,9 +160,17 @@ def get_fft(image,is_cut,cut_scale=None):
     f_image_norm = (f_image_norm-f_image_norm.min()) /(f_image_norm.max()-f_image_norm.min())
     return f_image_norm
 
+def get_tensor(tensor,):
+    tensor = tensor.mean(0)
+    tensor = (tensor-tensor.min()) /(tensor.max()-tensor.min())
+    return tensor
+
 def save_image(save_path,tensor,name,is_norm=False,is_rgb=False):
     assert len(tensor.shape) == 3,''
     tensor = tensor.detach().cpu()
+    
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
     if is_rgb:
         pass
     else:
@@ -148,7 +181,8 @@ def save_image(save_path,tensor,name,is_norm=False,is_rgb=False):
         os.makedirs(save_path)
     unloader = transforms.ToPILImage()
     image = unloader(tensor)
-    image.save(os.path.join(save_path,f'{name}.jpg'))
+    
+    image.save(os.path.join(save_path,f'{name}.jpg'),quality=100)
 
 
 def get_low_freq_scale(image):
