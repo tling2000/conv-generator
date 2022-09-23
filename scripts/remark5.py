@@ -39,14 +39,14 @@ def get_mean_low_freq_scale(image):
     f_image = torch.fft.fftshift(f_image,dim = (-2,-1))
     f_image_power = torch.mean(torch.abs(f_image)**2,dim=(1))
     f_image_norm = f_image_power / torch.sum(f_image_power,dim=(-2,-1),keepdim=True)
-    low_freq_scale = torch.sum(f_image_norm[:,int(H/2-H/16):int(H/2+H/16),int(W/2-W/16):int(W/2+H/16)],dim=(-2,-1))
+    low_freq_scale = torch.sum(f_image_norm[:,int(H/2-H/8):int(H/2+H/8),int(W/2-W/8):int(W/2+H/8)],dim=(-2,-1))
     return low_freq_scale
 
 if __name__ == '__main__':
-    seed = 0
+    seed = 1
     device = 'cuda:0'
     sample_num = 100
-    sample_net_num = 100
+    sample_net_num = 1
     with_relu = True
     
     save_root = f'/data2/tangling/conv-generator/outs/remark5/'
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         'tiny-imagenet',
         'broden',
     ]
-    kernel_sizes = [1,2,3,4,5,]
+    kernel_sizes = [1,3,5]
 
     
     save_path = make_dirs(save_root)
@@ -75,6 +75,7 @@ if __name__ == '__main__':
     fig,ax = plt.subplots(figsize=(3,2))
     ax.set_xlabel('Kernel size K')
     ax.set_ylabel('Low frequency power ratio')
+    ax.set_xticks(kernel_sizes)
     ax.grid(True,linestyle='--')
 
     for i in range(len(data_paths)):
@@ -117,7 +118,7 @@ if __name__ == '__main__':
             out_scale = np.array(temp_lis).mean()
             out_scale_lis.append(out_scale)
 
-        ax.plot(kernel_sizes,out_scale_lis,marker='x',label=tag)
+        ax.plot(kernel_sizes,out_scale_lis,label=tag)
 
     ax.legend()
     fig.savefig(os.path.join(save_path,'ratio.jpg'),dpi=300,bbox_inches='tight')

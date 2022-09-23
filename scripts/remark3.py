@@ -10,7 +10,7 @@ import seaborn as sns
 
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT
 from models import ConvNet
-from utils import get_logger, save_current_src,set_random,get_error,set_logger
+from utils import get_logger, save_current_src,set_random,get_error,set_logger,get_fft,save_image
 from dat import get_data
 
 def make_dirs(save_root):
@@ -34,20 +34,6 @@ def get_tensor(tensor,):
     tensor = (tensor-tensor.min()) /(tensor.max()-tensor.min())
     return tensor
 
-def save_image(save_path,tensor,name,is_norm=False,is_rgb=False):
-    assert len(tensor.shape) == 3,''
-    tensor = tensor.detach().cpu()
-    if is_rgb:
-        pass
-    else:
-        tensor = tensor.mean(0)
-    if is_norm:
-        tensor = (tensor-tensor.min()) /(tensor.max()-tensor.min())
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    unloader = transforms.ToPILImage()
-    image = unloader(tensor)
-    image.save(os.path.join(save_path,f'{name}.jpg'))
 
 def plot_heatmap(save_path: str, 
                  mats: list, 
@@ -74,21 +60,6 @@ def plot_heatmap(save_path: str,
         path = os.path.join(save_path, "{}_{:.4f}to{:.4f}.png".format(name, vmin, vmax)) 
     fig.savefig(path,dpi=300) 
     plt.close()
-
-
-def get_fft(image,vmin=None,vmax=None):
-    assert len(image.shape) == 3,''
-    C,H,W = image.shape
-    image = image.detach().cpu()
-    f_image = torch.fft.fft2(image)
-    f_image[:,0,0] = 0
-    f_image = torch.fft.fftshift(f_image,dim=(-2,-1))
-    f_image_norm = torch.abs(f_image).mean(0)
-    
-    # f_image_norm = f_image_norm[int(H/2-H/8):int(H/2+H/8),int(W/2-W/8):int(W/2+H/8)]
-    f_image_norm = (f_image_norm-f_image_norm.min()) /(f_image_norm.max()-f_image_norm.min())
-    return f_image_norm
-
 
 if __name__ == '__main__':
     seed = 1

@@ -90,6 +90,10 @@ class ConvNet(nn.Module):
         weight = self.main[lidx[0]].conv.weight.detach()
         f_weight = kernel_fft(weight,image_shape,device)
         T =  f_weight
+        if self.with_bias:
+            bias = self.main[lidx[0]].conv.bias.detach()
+            f_bias = (bias * H * W).to(device)
+            beta = f_bias
 
         for layer_id in range(lidx[0]+1,lidx[1]):
             weight = self.main[layer_id].conv.weight.detach()

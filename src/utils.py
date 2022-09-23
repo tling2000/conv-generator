@@ -116,25 +116,24 @@ def get_cos(
     num = np.sum((true_value * cal_value),axis=dims)
     denom = np.sqrt(np.sum(true_value**2,axis=dims)) * np.sqrt(np.sum(cal_value**2,axis=dims))
     cos = num / denom
-    # cos [denom == 0] = 1
-    cos = cos[denom!=0]
+    cos [denom == 0] = 1
+    # cos = cos[denom!=0]
     return cos.mean()
 
-def plot_fft(save_path,image,name,log_space,vmin=None,vmax=None,cbar=False):
+def get_fft(image,is_cut,cut_scale=None):
     assert len(image.shape) == 3,''
     C,H,W = image.shape
     image = image.detach().cpu()
     f_image = torch.fft.fft2(image)
-    # f_image[:,0,0] = 0
+    f_image[:,0,0] = 0
     f_image = torch.fft.fftshift(f_image,dim=(-2,-1))
     f_image_norm = torch.abs(f_image).mean(0)
-    # f_image_norm = f_image_norm[int(H/2-H/8):int(H/2+H/8),int(W/2-W/8):int(W/2+H/8)]
-    # f_image_power = torch.real(f_image * torch.conj(f_image))
-    # f_image_norm = f_image_power / f_image_power.sum()
-    if log_space:
-        f_image_norm = torch.log10(f_image_norm)
-        name = f'{name}_logspace'
-    plot_heatmap(save_path,f_image_norm,name,vmin=vmin,vmax=vmax,cbar=cbar)
+    
+    if is_cut:
+        assert cut_scale != None
+        f_image_norm = f_image_norm[int(H/2-H/(2*cut_scale)):int(H/2+H/(2*cut_scale)),int(W/2-W/(2*cut_scale)):int(W/2+H/(2*cut_scale))]
+    f_image_norm = (f_image_norm-f_image_norm.min()) /(f_image_norm.max()-f_image_norm.min())
+    return f_image_norm
 
 def save_image(save_path,tensor,name,is_norm=False,is_rgb=False):
     assert len(tensor.shape) == 3,''
@@ -150,6 +149,7 @@ def save_image(save_path,tensor,name,is_norm=False,is_rgb=False):
     unloader = transforms.ToPILImage()
     image = unloader(tensor)
     image.save(os.path.join(save_path,f'{name}.jpg'))
+
 
 def get_low_freq_scale(image):
     assert len(image.shape) == 3

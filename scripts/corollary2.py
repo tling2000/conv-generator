@@ -5,6 +5,7 @@ sys.path.append('../src')
 import torch
 import numpy as np
 from tqdm import tqdm
+from torchvision import transforms
 
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT
 from models import ConvNet
@@ -30,21 +31,25 @@ def make_dirs(save_root):
 
 if __name__ == '__main__':
     seed = 0
-    device = 'cuda:0'
-    sample_num = 3
-    with_relu = False
+    device = 'cuda:1'
+    sample_num = 50
+    pad = KERNEL_SIZE  // 2
+    pad_mode = 'zeros'
 
-    # pad = KERNEL_SIZE  // 2
-    # pad_mode = 'zeros'
-
-    pad = KERNEL_SIZE - 1
-    pad_mode = 'circular_one_side'
+    is_transform = False
+    
+    # with_relu = False
+    with_relu = True
     
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
     save_root = '/data2/tangling/conv-generator/outs/corollary2'
-    data_path = '/data2/tangling/conv-generator/data/broden1_224/image_64.pt'
+
+    # data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
+    # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/image.pt'
+    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+
     save_path = make_dirs(save_root)
     set_logger(save_path)
     logger = get_logger(__name__,True)
@@ -65,16 +70,19 @@ if __name__ == '__main__':
     ).to(device)
     conv_net.reset_params(PARAM_MEAN,PARAM_STD)
 
-    inputs = get_data(sample_num,data_path).to(device) #1*C*H*W
+    inputs = get_data(sample_num,data_path)
+    if is_transform:
+        transform = transforms.Resize(IMAGE_SHAPE)
+        inputs = transform(inputs)
 
-    error_lis = []
+    chi_uv = torch.load(f'/data2/tangling/conv-generator/data/delta_trans/chi_H{H}_K{K}.pt').detach()
+
     cos_lis = []
     for sample_id in tqdm(range(sample_num)):
         #sample the input
-        error_lis.append([])
         cos_lis.append([])
 
-        input = inputs[sample_id:sample_id+1]
+        input = inputs[sample_id:sample_id+1].to(device) #1*C*H*W
         output = conv_net(input) #1*C*H*W
         #real_fft
         output.retain_grad()
@@ -119,26 +127,16 @@ if __name__ == '__main__':
                 for u in range(H):
                     for v in range(W):
                         cal_f_weight_grad_[:,:,u,v] = torch.conj(T1[:,:,u,v] @ f_input[:,u,v]).unsqueeze(-1) @ (f_output_grad[:,u,v] @ torch.conj(T2[:,:,u,v])).unsqueeze(0)
-            
             #add the coef chi
             for u in range(H):
                 for v in range(W):
-                    delta_uv = delta_trans(KERNEL_SIZE,IMAGE_SHAPE,[u,v],device)
-                    cal_f_weight_grad += cal_f_weight_grad_[:,:,u,v].unsqueeze(-1).unsqueeze(-1) * delta_uv.unsqueeze(0).unsqueeze(0)
+                    temp_uv = chi_uv[u,v].to(device)
+                    cal_f_weight_grad += cal_f_weight_grad_[:,:,u,v].unsqueeze(-1).unsqueeze(-1) * temp_uv.unsqueeze(0).unsqueeze(0)
 
             cal_f_weight_grad =  torch.transpose(cal_f_weight_grad,0,1)
-            error = get_error(f_weight_grad.cpu().numpy(),cal_f_weight_grad.cpu().numpy())
-            cos = get_cos(f_weight_grad.cpu().numpy(),cal_f_weight_grad.cpu().numpy(),dims=(0,1))
-            error_lis[sample_id].append(error)
+            cos = get_cos(f_weight_grad.cpu().numpy(),cal_f_weight_grad.cpu().numpy(),dims=(-2,-1))
             cos_lis[sample_id].append(cos)
 
-
-    mean_error = np.array(error_lis).mean(0)
-    std_error = np.array(error_lis).std(0)
-    np.save(os.path.join(save_path,'mean_error.npy'),mean_error)
-    np.save(os.path.join(save_path,'std_error.npy'),std_error)
-    logger.info(f'mean error:{mean_error}')
-    logger.info(f'std error:{std_error}')
 
     mean_cos = np.array(cos_lis).mean(0)
     std_cos = np.array(cos_lis).std(0)
