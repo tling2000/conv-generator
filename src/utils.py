@@ -93,9 +93,13 @@ def plot_sub_heatmap(save_path: str,
 
     feature_num = len(mats)
     fig, ax = plt.subplots(1,feature_num,figsize=(feature_num*4,4))
-    for i in range(feature_num):
-        sns.heatmap(mats[i], annot=False, cbar=cbar, cmap = 'coolwarm', vmin = vmin, vmax = vmax,ax=ax[i]) 
-        ax[i].set_axis_off()  
+    if feature_num == 1:
+        sns.heatmap(mats[0], annot=False, cbar=cbar, cmap = 'coolwarm', vmin = vmin, vmax = vmax,ax=ax) 
+        ax.set_axis_off()  
+    else:
+        for i in range(feature_num):
+            sns.heatmap(mats[i], annot=False, cbar=cbar, cmap = 'coolwarm', vmin = vmin, vmax = vmax,ax=ax[i]) 
+            ax[i].set_axis_off()  
     fig.tight_layout()
     if not os.path.exists(save_path):
         os.makedirs(save_path)

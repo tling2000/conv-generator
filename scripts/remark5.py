@@ -44,7 +44,7 @@ def get_mean_low_freq_scale(image):
 
 if __name__ == '__main__':
     seed = 1
-    device = 'cuda:0'
+    device = 'cuda:1'
     sample_num = 100
     sample_net_num = 1
     with_relu = True
@@ -57,9 +57,9 @@ if __name__ == '__main__':
         '/data2/tangling/conv-generator/data/broden1_224/image.pt',
     ]
     tags = [
-        'cifar-10',
-        'tiny-imagenet',
-        'broden',
+        'Cifar-10',
+        'Tiny-ImageNet',
+        'Broden',
     ]
     kernel_sizes = [1,3,5]
 
@@ -72,11 +72,14 @@ if __name__ == '__main__':
     save_current_src(save_path,'../scripts')
 
 
-    fig,ax = plt.subplots(figsize=(3,2))
-    ax.set_xlabel('Kernel size K')
-    ax.set_ylabel('Low frequency power ratio')
+    fig,ax = plt.subplots(figsize=(2.4,1.7))
+
+    ax.set_xlabel('Kernel size K',fontdict={'size':16})
+    ax.set_ylabel(r'$p^{low}$',fontdict={'size':16})
     ax.set_xticks(kernel_sizes)
     ax.grid(True,linestyle='--')
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
 
     for i in range(len(data_paths)):
         set_random(seed)

@@ -17,6 +17,7 @@ def train(
     lr: float,
     device: str,
     trace_ids: list,
+    insert_pixcel: int,
     ):
 
     if not os.path.exists(save_path):
@@ -49,10 +50,10 @@ def train(
         image = Xs[trace_id].detach()
         f_out = get_fft(image,no_basis=False,is_cut=False)
         f_out_nozero = get_fft(image,no_basis=True,is_cut=False)
-        save_image(os.path.join(save_path,'results'),image,f'sample{trace_id}_image',is_rgb=True)
-        save_image(os.path.join(save_path,'results_nozero'),image,f'sample{trace_id}_image',is_rgb=True)
-        plot_sub_heatmap(os.path.join(save_path,'results'),[f_out],f'sample{trace_id}_spectrum')
-        plot_sub_heatmap(os.path.join(save_path,'results_nozero'),[f_out_nozero],f'sample{trace_id}_spectrum')
+        save_image(os.path.join(save_path,'results'),image,f'epoch0_sample{trace_id}_image',is_rgb=True)
+        save_image(os.path.join(save_path,'results_nozero'),image,f'epoch0_sample{trace_id}_image',is_rgb=True)
+        plot_sub_heatmap(os.path.join(save_path,'results'),[f_out],f'epoch0_sample{trace_id}_spectrum',cbar=False)
+        plot_sub_heatmap(os.path.join(save_path,'results_nozero'),[f_out_nozero],f'epoch0_sample{trace_id}_spectrum',cbar=False)
 
     #train
     losses = []
@@ -77,47 +78,47 @@ def train(
             loss += bloss.item()/batch_num
 
             #trace the samples
-            insert_pixcel = 1
+            if rnd % 5 == 0 or rnd % 5 == 0:
+                features_dict = hook.get_features()
+                for trace_id  in trace_ids:
+                    if trace_id in batch:
 
-            features_dict = hook.get_features()
-            for trace_id  in trace_ids:
-                if trace_id in batch:
-
-                    outs = []
-                    f_outs = []
-                    f_outs_nozero = []
-
-                    trace_batch_id  = np.argwhere(batch==trace_id)[0][0]
-                    for layer_name in features_dict.keys():
-
-                        image = torch.from_numpy(features_dict[layer_name][trace_batch_id])
-                        image = torch.repeat_interleave(get_tensor(image).unsqueeze(0),repeats=3,dim=0)
-                        image_temp = torch.zeros(3,H,W)
-                        scale = H // image.shape[1]
-                        for i in range(scale):
-                            for j in range(scale):
-                                image_temp[:,i::scale,j::scale] = image
-
-                        outs.append(image_temp)
+                        outs = []
+                        f_outs = []
+                        f_outs_nozero = []
                         outs.append(torch.ones((3,H,insert_pixcel)))
 
-                        f_out = get_fft(image,no_basis=False,is_cut=False)
-                        f_out_nozero = get_fft(image,no_basis=True,is_cut=False)
-                        f_outs.append(f_out)
-                        f_outs_nozero.append(f_out_nozero)
+                        trace_batch_id  = np.argwhere(batch==trace_id)[0][0]
+                        for layer_name in features_dict.keys():
 
-                    out = torch.concat(outs,dim=2)
-                    save_image(os.path.join(save_path,'results'),out,f'epoch{rnd}-sample{trace_id}-uptime',is_rgb=True)
-                    save_image(os.path.join(save_path,'results_nozero'),out,f'epoch{rnd}-sample{trace_id}-uptime',is_rgb=True)
+                            image = torch.from_numpy(features_dict[layer_name][trace_batch_id])
+                            image = torch.repeat_interleave(get_tensor(image).unsqueeze(0),repeats=3,dim=0)
+                            image_temp = torch.zeros(3,H,W)
+                            scale = H // image.shape[1]
+                            for i in range(scale):
+                                for j in range(scale):
+                                    image_temp[:,i::scale,j::scale] = image
 
-                    plot_sub_heatmap(os.path.join(save_path,'results'),f_outs,f'epoch{rnd}-sample{trace_id}-upspec',cbar=False)
-                    plot_sub_heatmap(os.path.join(save_path,'results_nozero'),f'epoch{rnd}-sample{trace_id}-upspec',cbar=False)
+                            outs.append(image_temp)
+                            outs.append(torch.ones((3,H,insert_pixcel)))
+
+                            f_out = get_fft(image,no_basis=False,is_cut=False)
+                            f_out_nozero = get_fft(image,no_basis=True,is_cut=False)
+                            f_outs.append(f_out)
+                            f_outs_nozero.append(f_out_nozero)
+
+                        out = torch.concat(outs,dim=2)
+                        save_image(os.path.join(save_path,'results'),out,f'epoch{rnd}_sample{trace_id}_uptime',is_rgb=True)
+                        save_image(os.path.join(save_path,'results_nozero'),out,f'epoch{rnd}_sample{trace_id}_uptime',is_rgb=True)
+
+                        plot_sub_heatmap(os.path.join(save_path,'results'),f_outs,f'epoch{rnd}_sample{trace_id}_upspec',cbar=False)
+                        plot_sub_heatmap(os.path.join(save_path,'results_nozero'),f_outs_nozero,f'epoch{rnd}_sample{trace_id}_upspec',cbar=False)
 
         #register the loss
         losses.append(loss)
 
         #plot the heatmap
-        if rnd == rounds-1:
+        if rnd == rounds - 1:
             model_path = os.path.join(save_path,'model')
             if not os.path.exists(model_path):
                 os.makedirs(model_path)
