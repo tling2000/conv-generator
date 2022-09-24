@@ -39,19 +39,19 @@ if __name__ == '__main__':
 
     save_root = f'/data2/tangling/conv-generator/outs/bottleneck1'
 
-    data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
-    H,W = 32,32
-    trace_ids = []
-    for i in range(0,1000,10):
-        trace_ids.append(i)
-    insert_pixcel = 1
-
-    # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled/image_64.pt'
-    # H,W = 64,64
+    # data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
+    # H,W = 32,32
     # trace_ids = []
-    # for i in range(0,2000,20):
+    # for i in range(0,1000,10):
     #     trace_ids.append(i)
-    # insert_pixcel = 3
+    # insert_pixcel = 1
+
+    data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled2/image_64.pt'
+    H,W = 64,64
+    trace_ids = []
+    for i in range(0,2000,20):
+        trace_ids.append(i)
+    insert_pixcel = 3
 
     # data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
     # insert_pixcel = 10

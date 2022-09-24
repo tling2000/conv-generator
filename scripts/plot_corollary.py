@@ -14,7 +14,7 @@ def plot_figure(root1,root2,label1,label2,save_root,name,index):
     figsize = (3,2.2)
     
     fig,ax = plt.subplots(figsize=figsize)
-    ax.set_xlabel('Network depth L',fontdict={'size':16})
+    ax.set_xlabel('Network layer l',fontdict={'size':16})
     ax.set_ylabel('Cosine similarity',fontdict={'size':16})
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
@@ -29,26 +29,26 @@ def plot_figure(root1,root2,label1,label2,save_root,name,index):
     plot_mean_std(ax,index,mean_c,std_c,'C1',label2,ls='-')
 
     ax.legend(loc=4)
-    fig.savefig(os.path.join(save_root,f'{name}.jpg'),dpi=300,bbox_inches='tight')
+    fig.savefig(os.path.join(save_root,f'{name}.pdf'),bbox_inches='tight')
     return True
 
 
 if __name__ == '__main__':
     label1 = 'w/o ReLU'
     label2 = 'with ReLU'
-    tag = 'cifar'
+    tag = 'broden'
 
     # corollary1
-    # root1 = f'/data2/tangling/conv-generator/outs/corollary1/0921/{tag}-worelu'
-    # root2 = f'/data2/tangling/conv-generator/outs/corollary1/0921/{tag}-exp'
-    # save_root = '/data2/tangling/conv-generator/outs/corollary1/0921'
-    # name = f'{tag}'
-    # plot_figure(root1,root2,label1,label2,save_root,name,range(9))
+    root1 = f'/data2/tangling/conv-generator/outs/corollary1/0921/{tag}-worelu'
+    root2 = f'/data2/tangling/conv-generator/outs/corollary1/0921/{tag}-exp'
+    save_root = '/data2/tangling/conv-generator/outs/corollary1'
+    name = f'{tag}'
+    plot_figure(root1,root2,label1,label2,save_root,name,range(9))
 
     # corollary2
-    root1 = f'/data2/tangling/conv-generator/outs/corollary2/0922/{tag}-worelu'
-    root2 = f'/data2/tangling/conv-generator/outs/corollary2/0922/{tag}-relu'
-    save_root = f'/data2/tangling/conv-generator/outs/corollary2/0922'
+    root1 = f'/data2/tangling/conv-generator/outs/corollary2/0924/{tag}-worelu'
+    root2 = f'/data2/tangling/conv-generator/outs/corollary2/0924/{tag}-relu'
+    save_root = f'/data2/tangling/conv-generator/outs/corollary2'
     name = f'{tag}'
     plot_figure(root1,root2,label1,label2,save_root,name,range(1,10))
 

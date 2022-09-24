@@ -1,4 +1,3 @@
-from cProfile import label
 import os,sys
 sys.path.append('../src')
 
@@ -44,7 +43,7 @@ def get_mean_low_freq_scale(image):
 
 if __name__ == '__main__':
     seed = 1
-    device = 'cuda:1'
+    device = 'cuda:2'
     sample_num = 100
     sample_net_num = 1
     with_relu = True
@@ -124,5 +123,5 @@ if __name__ == '__main__':
         ax.plot(kernel_sizes,out_scale_lis,label=tag)
 
     ax.legend()
-    fig.savefig(os.path.join(save_path,'ratio.jpg'),dpi=300,bbox_inches='tight')
+    fig.savefig(os.path.join(save_path,'ratio.pdf'),bbox_inches='tight')
 

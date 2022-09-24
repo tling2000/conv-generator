@@ -7,11 +7,11 @@ from tqdm import tqdm
 from torchvision import transforms
 
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_UPSAMPLE,WITH_BIAS,DATE,MOMENT
-from models import ToyAE
+from models import ToyAE,ConvAE
 from coef import kernel_fft,alpha_trans
 from utils import get_logger, plot_heatmap, save_current_src,set_random,get_error,set_logger
 from dat import get_gaussian_2d,get_data
-from train import train
+from train import train1
 
 def make_dirs(save_root):
     exp_name = "-".join([DATE, 
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     seed = 0
     device = 'cuda:1'
     sample_num = 2000
-    bs = 500
+    bs = 200
     lr = 0.0001
     rounds = 50
     K = KERNEL_SIZE
@@ -47,6 +47,7 @@ if __name__ == '__main__':
 
     data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled/image_64.pt'
     trace_ids = []
+    H,W = 64,64
     for i in range(0,2000,20):
         trace_ids.append(i)
     insert_pixcel = 3
@@ -67,17 +68,15 @@ if __name__ == '__main__':
     save_current_src(save_path,'../src')
     save_current_src(save_path,'../scripts')
 
-    conv_ae = ToyAE(
-        KERNEL_SIZE,
-        IN_CHANNELS,
-        MID_CHANNELS,
-        WITH_UPSAMPLE,
-        WITH_BIAS,
+    conv_ae = ConvAE(
+        'vgg16_bn',
+        pretrained=True,
+        image_shape=(H,W)
     )
 
     dat = get_data(sample_num,data_path)
     Xs = dat.detach()
-    train(
+    train1(
         conv_ae,
         Xs,
         save_path,

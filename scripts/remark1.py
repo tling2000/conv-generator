@@ -37,7 +37,7 @@ def plot_mean_abs(save_path,mat,name):
 
 if __name__ == '__main__':
     seed = 0
-    device = 'cuda:0'
+    device = 'cuda:1'
     sample_num = 50
     sample_net_num = 100
     with_relu = True
@@ -53,12 +53,15 @@ if __name__ == '__main__':
 
     save_root = f'/data2/tangling/conv-generator/outs/remark1/'
 
+    # tag = 'cifar'
     # data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
     # trace_index = (0,1,2,4,8,16)
 
+    # tag = 'imagenet'
     # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/image.pt'
     # trace_index = (0,1,2,4,8,16,32)
 
+    tag = 'broden'
     data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
     trace_index = (0,1,2,4,8,16,32,64,112)
 
@@ -103,19 +106,19 @@ if __name__ == '__main__':
         som_array = torch.concat(som_lis)
         soms_lis.append(som_array.unsqueeze(0))
     soms_array = torch.concat(soms_lis).mean(0)
-    torch.save(som_array,os.path.join(save_path,'soms.pt'))
+    torch.save(soms_array,os.path.join(save_path,'soms.pt'))
     
     #plot
     x = range(1,CONV_NUM+1)
     fig,ax = plt.subplots(figsize=(3,2.6))
     # ax.set_yscale('log',base=10)
     ax.grid(True, which = 'both',linestyle='--')
-    ax.set_ylabel(r'log SOM($\mathbf{h}^{(uv)}$)',fontdict={'size':16})
-    ax.set_xlabel('Network depth L',fontdict={'size':16})
+    ax.set_ylabel(r'$\mathbf{log}$ SOM($\mathbf{h}^{(uv)}$)',fontdict={'size':16})
+    ax.set_xlabel('Network layer l',fontdict={'size':16})
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     for i,index in enumerate(trace_index):
         ax.plot(x,torch.log10(soms_array[:,index,index]),label=f'u=v={index}',c='red',alpha=1-(i/(len(trace_index)+2)))
     ax.legend(loc=2)
-    fig.savefig(os.path.join(save_path,'som.jpg'),bbox_inches='tight',dpi=300)
+    fig.savefig(os.path.join(save_path,f'{tag}_som.pdf'),bbox_inches='tight')
     

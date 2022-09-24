@@ -216,7 +216,7 @@ def train2(
     for trace_id in trace_ids:
         outs,f_outs = [],[]
         outs.append(torch.ones((3,H,insert_pixcel)))
-        for layer_id in [0,5,15,30,50,100,199]:
+        for layer_id in [0,5,20,50,100,200,300,399]:
             image = outputs_dict[f'sample{trace_id}'][layer_id]
             outs.append(image)
             outs.append(torch.ones((3,H,insert_pixcel)))

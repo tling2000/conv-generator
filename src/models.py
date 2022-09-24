@@ -230,7 +230,7 @@ if __name__ == '__main__':
     net = ConvAE(
         encode_net='vgg16',
         pretrained=True,
-        image_shape=(64,64)
+        image_shape=(224,224)
     )
     output = net(input)
     print(net)

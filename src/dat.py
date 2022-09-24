@@ -80,6 +80,6 @@ if __name__ == '__main__':
     create_data(
         (64,64),
         None,
-        data_path='/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled',
-        save_path='/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled'
+        data_path='/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled2',
+        save_path='/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled2'
     )
