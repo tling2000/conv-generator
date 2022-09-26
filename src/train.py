@@ -80,7 +80,7 @@ def train1(
             loss += bloss.item()/batch_num
 
             #trace the samples
-            if rnd % 10 == 0 or rnd == rounds -1:
+            if rnd in [0,1,2,3,4,5,6,7,8,9,20,50,100,200,300] or rnd == rounds -1:
                 features_dict = hook.get_features()
                 for trace_id  in trace_ids:
                     if trace_id in batch:
@@ -92,8 +92,21 @@ def train1(
 
                         trace_batch_id  = np.argwhere(batch==trace_id)[0][0]
                         for layer_name in features_dict.keys():
+                            if layer_name == 'decode/0':
+                                image = torch.from_numpy(features_dict[layer_name][trace_batch_id])
+                                f_out = get_fft(image,no_basis=False,is_cut=False)
+                                f_out_nozero = get_fft(image,no_basis=True,is_cut=False)
+                                save_image(os.path.join(save_path,'results'),image,f'epoch{rnd}_sample{trace_id}_layer1',is_rgb=False,is_norm=True)
+                                save_image(os.path.join(save_path,'results_nozero'),image,f'epoch{rnd}_sample{trace_id}_layer1',is_rgb=False,is_norm=True)
+                                plot_sub_heatmap(os.path.join(save_path,'results'),[f_out],f'epoch{rnd}_sample{trace_id}_layer1_spec',cbar=False)
+                                plot_sub_heatmap(os.path.join(save_path,'results_nozero'),[f_out_nozero],f'epoch{rnd}_sample{trace_id}_layer1_spec',cbar=False)
+                                continue
 
                             image = torch.from_numpy(features_dict[layer_name][trace_batch_id])
+                            
+                            f_out = get_fft(image,no_basis=False,is_cut=False)
+                            f_out_nozero = get_fft(image,no_basis=True,is_cut=False)
+                            
                             image = torch.repeat_interleave(get_tensor(image).unsqueeze(0),repeats=3,dim=0)
                             image_temp = torch.zeros(3,H,W)
                             scale = H // image.shape[1]
@@ -104,8 +117,6 @@ def train1(
                             outs.append(image_temp)
                             outs.append(torch.ones((3,H,insert_pixcel)))
 
-                            f_out = get_fft(image,no_basis=False,is_cut=False)
-                            f_out_nozero = get_fft(image,no_basis=True,is_cut=False)
                             f_outs.append(f_out)
                             f_outs_nozero.append(f_out_nozero)
 

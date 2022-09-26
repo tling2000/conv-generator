@@ -56,17 +56,23 @@ if __name__ == '__main__':
 
     save_root = f'/data2/tangling/conv-generator/outs/remark2/'
 
-    data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
-    trace_id = range(100)
-    insert_pixcel = 1
+    # data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
+    # trace_id = range(100)
+    # insert_pixcel = 1
+    # is_cut = False
+    # cut_scale = None
 
     # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/image.pt'
-    # trace_id = [11,17,28,39,47,68,69,73,79,81]
+    # trace_id = range(0,2000,40)
     # insert_pixcel = 3
+    # is_cut = False
+    # cut_scale = None
 
-    # data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
-    # trace_id = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391,1328,1438,2393,2914,3035,4497,5600]
-    # insert_pixcel = 10
+    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+    trace_id = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391,1328,1438,2393,2914,3035,4497,5600]
+    insert_pixcel = 10
+    is_cut = True
+    cut_scale = 4
     
     save_path = make_dirs(save_root)
     set_logger(save_path)
@@ -98,20 +104,23 @@ if __name__ == '__main__':
     for sample_id in range(len(inputs)):
         out_list.append([])
         f_out_list.append([])
+        out_list[sample_id].append(torch.ones((3,H,insert_pixcel)))
+
         image = inputs[sample_id].detach()
-        f_out = get_fft(image)
-        out_list[sample_id].append(torch.ones((3,H,insert_pixcel)))
-        out_list[sample_id].append(image)
-        out_list[sample_id].append(torch.ones((3,H,insert_pixcel)))
-        f_out_list[sample_id].append(f_out)
+        f_out = get_fft(image,no_basis=True,is_cut=is_cut,cut_scale=cut_scale)
+        save_image(save_path,image,f'sample{trace_id[sample_id]}_in',is_rgb=True)
+        plot_sub_heatmap(save_path,[f_out],f'sample{trace_id[sample_id]}_inspec',cbar=False)
+
         
+
     for layer_id in range(CONV_NUM):
+
         outputs = conv_net.main[layer_id].conv(outputs)
-        if layer_id in [1,3,9]:
+        if layer_id in [0,2,9]:
             for sample_id in range(len(inputs)):
                 image = outputs[sample_id].detach()
                 out = torch.repeat_interleave(get_tensor(image).unsqueeze(0),repeats=3,dim=0)
-                f_out = get_fft(image)
+                f_out = get_fft(image,no_basis=True,is_cut=is_cut,cut_scale=cut_scale)
                 out_list[sample_id].append(out)
                 out_list[sample_id].append(torch.ones((3,H,insert_pixcel)))
                 f_out_list[sample_id].append(f_out)
@@ -120,6 +129,6 @@ if __name__ == '__main__':
     for sample_id in range(len(inputs)):
             
         out = torch.concat(out_list[sample_id],dim=2)
-        save_image(save_path,out,f'out_{trace_id[sample_id]}',is_rgb=True)
-        plot_sub_heatmap(save_path,f_out_list[sample_id],f'f_out_{trace_id[sample_id]}',cbar=False)
+        save_image(save_path,out,f'sample{trace_id[sample_id]}_out',is_rgb=True)
+        plot_sub_heatmap(save_path,f_out_list[sample_id],f'sample{trace_id[sample_id]}_outspec',cbar=False)
 

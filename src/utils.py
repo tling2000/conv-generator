@@ -157,6 +157,8 @@ def get_fft(image,no_basis,is_cut,cut_scale=None):
         f_image[:,0,0] = 0
     f_image = torch.fft.fftshift(f_image,dim=(-2,-1))
     f_image_norm = torch.abs(f_image).mean(0)
+    if no_basis:
+        f_image_norm[H//2,W//2] = f_image_norm.max()
     
     if is_cut:
         assert cut_scale != None

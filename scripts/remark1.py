@@ -56,6 +56,7 @@ if __name__ == '__main__':
     # tag = 'cifar'
     # data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
     # trace_index = (0,1,2,4,8,16)
+    # trace_index = ((1,10),(3,7),(5,2),(8,4),(9,5))
 
     # tag = 'imagenet'
     # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/image.pt'
@@ -89,24 +90,26 @@ if __name__ == '__main__':
     relu = torch.nn.ReLU()
 
     #get som lis
-    soms_lis = []
-    for j in  tqdm(range(sample_net_num)):
-        som_lis = []
-        outputs = dat.detach()
-        conv_net.reset_params(PARAM_MEAN,PARAM_STD)
-        for i in range(CONV_NUM):
-            outputs = conv_net.main[i].conv(outputs)
-            f_outputs = torch.fft.fft2(outputs.detach().cpu())
-            som = torch.real(f_outputs * torch.conj(f_outputs))
-            som_lis.append(som[:,0].mean(0,keepdim=True))
+    # soms_lis = []
+    # for j in  tqdm(range(sample_net_num)):
+    #     som_lis = []
+    #     outputs = dat.detach()
+    #     conv_net.reset_params(PARAM_MEAN,PARAM_STD)
+    #     for i in range(CONV_NUM):
+    #         outputs = conv_net.main[i].conv(outputs)
+    #         f_outputs = torch.fft.fft2(outputs.detach().cpu())
+    #         som = torch.real(f_outputs * torch.conj(f_outputs))
+    #         som_lis.append(som[:,0].mean(0,keepdim=True))
 
-            if with_relu:
-                outputs = relu(outputs)
+    #         if with_relu:
+    #             outputs = relu(outputs)
             
-        som_array = torch.concat(som_lis)
-        soms_lis.append(som_array.unsqueeze(0))
-    soms_array = torch.concat(soms_lis).mean(0)
-    torch.save(soms_array,os.path.join(save_path,'soms.pt'))
+    #     som_array = torch.concat(som_lis)
+    #     soms_lis.append(som_array.unsqueeze(0))
+    # soms_array = torch.concat(soms_lis).mean(0)
+    # torch.save(soms_array,os.path.join(save_path,'soms.pt'))
+
+    soms_array = torch.load('/data2/tangling/conv-generator/outs/remark1/0924/0924-210257-conv_num50-K5-in_channels3-mid_channels16-biasFalse-mean0-std0.1/soms.pt')
     
     #plot
     x = range(1,CONV_NUM+1)
@@ -114,11 +117,12 @@ if __name__ == '__main__':
     # ax.set_yscale('log',base=10)
     ax.grid(True, which = 'both',linestyle='--')
     ax.set_ylabel(r'$\mathbf{log}$ SOM($\mathbf{h}^{(uv)}$)',fontdict={'size':16})
-    ax.set_xlabel('Network layer l',fontdict={'size':16})
+    ax.set_xlabel('Network layer number',fontdict={'size':16})
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     for i,index in enumerate(trace_index):
         ax.plot(x,torch.log10(soms_array[:,index,index]),label=f'u=v={index}',c='red',alpha=1-(i/(len(trace_index)+2)))
+        # ax.plot(x,torch.log10(soms_array[:,index[0],index[1]]),label=f'u={index[0]},v={index[1]}',c='red',alpha=1-(i/(len(trace_index)+2)))
     ax.legend(loc=2)
     fig.savefig(os.path.join(save_path,f'{tag}_som.pdf'),bbox_inches='tight')
     

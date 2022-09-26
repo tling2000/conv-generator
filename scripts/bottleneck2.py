@@ -29,11 +29,11 @@ def make_dirs(save_root):
 
 if __name__ == '__main__':
     seed = 0
-    device = 'cuda:1'
+    device = 'cuda:0'
     sample_num = 2000
     bs = 200
     lr = 0.0001
-    rounds = 50
+    rounds = 10
     K = KERNEL_SIZE
     H,W = IMAGE_SHAPE
 
@@ -46,10 +46,10 @@ if __name__ == '__main__':
     # insert_pixcel = 1
 
     data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled/image_64.pt'
-    trace_ids = []
+    trace_ids = [120,1760,1340]
     H,W = 64,64
-    for i in range(0,2000,20):
-        trace_ids.append(i)
+    # for i in range(0,2000,20):
+    #     trace_ids.append(i)
     insert_pixcel = 3
 
 
@@ -73,6 +73,7 @@ if __name__ == '__main__':
         pretrained=True,
         image_shape=(H,W)
     )
+
 
     dat = get_data(sample_num,data_path)
     Xs = dat.detach()

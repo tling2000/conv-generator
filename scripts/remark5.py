@@ -56,7 +56,7 @@ if __name__ == '__main__':
         '/data2/tangling/conv-generator/data/broden1_224/image.pt',
     ]
     tags = [
-        'Cifar-10',
+        'CIFAR-10',
         'Tiny-ImageNet',
         'Broden',
     ]
