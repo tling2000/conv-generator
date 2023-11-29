@@ -6,6 +6,3 @@ data/
 temp/
 #ignor the cache
 *.pyc
-
-batch-norm/
-bn-outs/
