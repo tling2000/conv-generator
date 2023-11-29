@@ -1,6 +1,4 @@
 import os,sys
-from readline import insert_text
-from tkinter.messagebox import NO
 sys.path.append('../src')
 
 import torch
@@ -8,7 +6,6 @@ import numpy as np
 from tqdm import tqdm
 from matplotlib import pyplot as plt
 import seaborn as sns
-from PIL import Image
 from torchvision import transforms
 
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT
@@ -52,7 +49,6 @@ if __name__ == '__main__':
     # pad_mode = 'circular_one_side'
 
     K = KERNEL_SIZE
-    H,W = IMAGE_SHAPE
 
     save_root = f'/data2/tangling/conv-generator/outs/remark2/'
 
@@ -61,18 +57,21 @@ if __name__ == '__main__':
     # insert_pixcel = 1
     # is_cut = False
     # cut_scale = None
+    # H,W = 32,32
 
-    # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/image.pt'
-    # trace_id = range(0,2000,40)
-    # insert_pixcel = 3
-    # is_cut = False
-    # cut_scale = None
-
-    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
-    trace_id = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391,1328,1438,2393,2914,3035,4497,5600]
-    insert_pixcel = 10
+    data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled2/image_64.pt'
+    trace_id = range(0,2000,40)
+    insert_pixcel = 3
     is_cut = True
-    cut_scale = 4
+    cut_scale = 3
+    H,W = 64,64
+
+    # data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+    # trace_id = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391,1328,1438,2393,2914,3035,4497,5600]
+    # insert_pixcel = 10
+    # is_cut = True
+    # cut_scale = 4
+    # H,W = 224,224
     
     save_path = make_dirs(save_root)
     set_logger(save_path)
@@ -80,7 +79,6 @@ if __name__ == '__main__':
     set_random(seed)
     save_current_src(save_path,'../src')
     save_current_src(save_path,'../scripts')
-
 
     conv_net = ConvNet(
         KERNEL_SIZE,
@@ -111,8 +109,6 @@ if __name__ == '__main__':
         save_image(save_path,image,f'sample{trace_id[sample_id]}_in',is_rgb=True)
         plot_sub_heatmap(save_path,[f_out],f'sample{trace_id[sample_id]}_inspec',cbar=False)
 
-        
-
     for layer_id in range(CONV_NUM):
 
         outputs = conv_net.main[layer_id].conv(outputs)
@@ -124,7 +120,8 @@ if __name__ == '__main__':
                 out_list[sample_id].append(out)
                 out_list[sample_id].append(torch.ones((3,H,insert_pixcel)))
                 f_out_list[sample_id].append(f_out)
-        outputs = relu(outputs)
+        if with_relu:
+            outputs = relu(outputs)
     
     for sample_id in range(len(inputs)):
             

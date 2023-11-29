@@ -30,7 +30,6 @@ class SingleConv(nn.Module):
             self.conv = nn.Conv2d(in_channels,out_channels,kernel_size,stride=1,bias=with_bias)
         else:
             self.conv = nn.Conv2d(in_channels,out_channels,kernel_size,stride=1,padding=pad,bias=with_bias,padding_mode=pad_mode)
-        
         if with_relu:
             self.relu = nn.ReLU()
 
@@ -42,6 +41,36 @@ class SingleConv(nn.Module):
         if not self.with_relu:
             return x
         x = self.relu(x)
+        return x
+
+class ToyConvAE(nn.Module):
+    def __init__(
+        self,
+        kernel_size: int,
+        in_channels: int,
+        mid_channels: int,
+        conv_num: int,
+        ) -> None:
+        super(ToyConvAE,self).__init__()
+
+        pad_mode = 'circular_one_side'
+        pad = kernel_size - 1
+        with_bias = False
+        with_relu = True
+
+        if conv_num == 1:
+            self.main = nn.Sequential(
+            SingleConv(in_channels,in_channels,kernel_size,pad,pad_mode,with_bias,False),
+            )
+        else:
+            self.main = nn.Sequential(
+                SingleConv(in_channels,mid_channels,kernel_size,pad,pad_mode,with_bias,with_relu),
+                *[SingleConv(mid_channels,mid_channels,kernel_size,pad,pad_mode,with_bias,with_relu) for i in range(conv_num-2)],
+                SingleConv(mid_channels,in_channels,kernel_size,pad,pad_mode,with_bias,False),
+            )
+
+    def forward(self,x):
+        x = self.main(x)
         return x
 
 class ConvNet(nn.Module):

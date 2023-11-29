@@ -30,8 +30,8 @@ def make_dirs(save_root):
 if __name__ == '__main__':
     seed = 0
     device = 'cuda:0'
-    sample_num = 2000
-    bs = 200
+    sample_num = 100
+    bs = 10
     lr = 0.0001
     rounds = 10
     K = KERNEL_SIZE
@@ -41,25 +41,25 @@ if __name__ == '__main__':
 
     # data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
     # trace_ids = []
-    # for i in range(0,1000,10):
+    # H,W = 32,32
+    # for i in range(0,100,10):
     #     trace_ids.append(i)
     # insert_pixcel = 1
 
-    data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled/image_64.pt'
-    trace_ids = [120,1760,1340]
-    H,W = 64,64
-    # for i in range(0,2000,20):
-    #     trace_ids.append(i)
-    insert_pixcel = 3
+    # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled/image_64.pt'
+    # trace_ids = [120,1760,1340]
+    # H,W = 64,64
+    # # for i in range(0,2000,20):
+    # #     trace_ids.append(i)
+    # insert_pixcel = 3
 
-
-    # data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
-    # insert_pixcel = 10
-    # trace_ids = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391]
+    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+    H,W = 224,224
+    insert_pixcel = 10
+    trace_ids = [16,17,26,31,35,40,46,59,72,79,80,82,90,98]
     # for i in range(500,1000,10):
     #     trace_ids.append(i)
     # trace_ids = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391,1328,1438,2393,2914,3035,4497,5600]
-
 
     save_path = make_dirs(save_root)
     set_logger(save_path)

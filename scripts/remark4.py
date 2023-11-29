@@ -10,7 +10,7 @@ import seaborn as sns
 
 from config import CONV_NUM, KERNEL_SIZE,IMAGE_SHAPE,IN_CHANNELS,MID_CHANNELS,WITH_BIAS,PARAM_MEAN,PARAM_STD,DATE,MOMENT
 from models import ConvNet
-from utils import get_logger, save_current_src,set_random,get_error,set_logger
+from utils import get_logger, save_current_src,set_random,get_error,set_logger,plot_sub_heatmap,get_fft,get_tensor,save_image
 from dat import get_data
 
 def make_dirs(save_root):
@@ -29,67 +29,6 @@ def make_dirs(save_root):
         os.makedirs(save_path)
     return save_path
 
-def get_tensor(tensor,):
-    tensor = tensor.mean(0)
-    tensor = (tensor-tensor.min()) /(tensor.max()-tensor.min())
-    return tensor
-
-def save_image(save_path,tensor,name,is_norm=False,is_rgb=False):
-    assert len(tensor.shape) == 3,''
-    tensor = tensor.detach().cpu()
-    if is_rgb:
-        pass
-    else:
-        tensor = tensor.mean(0)
-    if is_norm:
-        tensor = (tensor-tensor.min()) /(tensor.max()-tensor.min())
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    unloader = transforms.ToPILImage()
-    image = unloader(tensor)
-    image.save(os.path.join(save_path,f'{name}.jpg'))
-
-def plot_heatmap(save_path: str, 
-                 mats: list, 
-                 name: str, 
-                 vmin: int = None, 
-                 vmax: int = None,
-                 cbar: bool = True,
-                 ) -> None: 
-    assert (vmin is None) == (vmax is None), "vmin and vmax must be both None or not None"
-
-    feature_num = len(mats)
-    fig, ax = plt.subplots(1,feature_num,figsize=(feature_num*4,4))
-    for i in range(feature_num):
-        sns.heatmap(mats[i], annot=False, cbar=cbar, cmap = 'coolwarm', vmin = vmin, vmax = vmax,ax=ax[i]) 
-        ax[i].set_axis_off()  
-    # ax.set_title(name) 
-    # plt.axis('off')
-    fig.tight_layout()
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    if vmin is None:
-        path = os.path.join(save_path, f"{name}.png")
-    else:
-        path = os.path.join(save_path, "{}_{:.4f}to{:.4f}.png".format(name, vmin, vmax)) 
-    fig.savefig(path,dpi=300) 
-    plt.close()
-
-
-def get_fft(image,vmin=None,vmax=None):
-    assert len(image.shape) == 3,''
-    C,H,W = image.shape
-    image = image.detach().cpu()
-    f_image = torch.fft.fft2(image)
-    f_image[:,0,0] = 0
-    f_image = torch.fft.fftshift(f_image,dim=(-2,-1))
-    f_image_norm = torch.abs(f_image).mean(0)
-    
-    # f_image_norm = f_image_norm[int(H/2-H/8):int(H/2+H/8),int(W/2-W/8):int(W/2+H/8)]
-    f_image_norm = (f_image_norm-f_image_norm.min()) /(f_image_norm.max()-f_image_norm.min())
-    return f_image_norm
-
-
 
 if __name__ == '__main__':
     seed = 1
@@ -102,17 +41,26 @@ if __name__ == '__main__':
     
     save_root = f'/data2/tangling/conv-generator/outs/remark4/'
     
-    data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
-    trace_id = range(100)
-    insert_pixcel = 1
+    # data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
+    # trace_id = range(100)
+    # insert_pixcel = 1
+    # is_cut = False
+    # cut_scale = None
+    # H,W = 32,32
 
-    # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/image.pt'
-    # trace_id = [11,17,28,39,47,68,69,73,79,81]
-    # insert_pixcel = 3
+    data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled2/image_64.pt'
+    trace_id = range(0,2000,40)
+    insert_pixcel = 3
+    is_cut = False
+    cut_scale = None
+    H,W = 64,64
 
     # data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
     # trace_id = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391,1328,1438,2393,2914,3035,4497,5600]
     # insert_pixcel = 10
+    # is_cut = True
+    # cut_scale = 4
+    # H,W = 224,224
 
     save_path = make_dirs(save_root)
     set_logger(save_path)
@@ -130,16 +78,16 @@ if __name__ == '__main__':
     for sample_id in range(len(inputs)):
         out_list.append([])
         f_out_list.append([])
-        image = inputs[sample_id].detach().cpu()
-        f_out = get_fft(image)
         out_list[sample_id].append(torch.ones((3,H,insert_pixcel)))
-        out_list[sample_id].append(image)
-        out_list[sample_id].append(torch.ones((3,H,insert_pixcel)))
-        f_out_list[sample_id].append(f_out)
 
-    for i in range(2):
-        pad_mode = ['zeros','circular_one_side'][i]
-        pad = [KERNEL_SIZE  // 2,KERNEL_SIZE-1][i]
+        image = inputs[sample_id].detach()
+        f_out = get_fft(image,no_basis=True,is_cut=is_cut,cut_scale=cut_scale)
+        save_image(save_path,image,f'sample{trace_id[sample_id]}_in',is_rgb=True)
+        plot_sub_heatmap(save_path,[f_out],f'sample{trace_id[sample_id]}_inspec',cbar=False)
+
+    for i in range(3):
+        pad_mode = ['zeros','circular_one_side','reflect'][i]
+        pad = [KERNEL_SIZE  // 2,KERNEL_SIZE-1, KERNEL_SIZE  // 2][i]
 
         conv_net = ConvNet(
                 KERNEL_SIZE,
@@ -157,12 +105,12 @@ if __name__ == '__main__':
         for sample_id in range(len(inputs)):
             image = outputs[sample_id].detach().cpu()
             out = torch.repeat_interleave(get_tensor(image).unsqueeze(0),repeats=3,dim=0)
-            f_out = get_fft(image)
+            f_out = get_fft(image,no_basis=True,is_cut=is_cut,cut_scale=cut_scale)
             out_list[sample_id].append(out)
             out_list[sample_id].append(torch.ones((3,H,insert_pixcel)))
             f_out_list[sample_id].append(f_out)
 
     for sample_id in range(len(inputs)):
         out = torch.concat(out_list[sample_id],dim=2)
-        save_image(save_path,out,f'out_{trace_id[sample_id]}',is_rgb=True)
-        plot_heatmap(save_path,f_out_list[sample_id],f'f_out_{trace_id[sample_id]}',cbar=False)
+        save_image(save_path,out,f'sample{trace_id[sample_id]}_out',is_rgb=True)
+        plot_sub_heatmap(save_path,f_out_list[sample_id],f'sample{trace_id[sample_id]}_outspec',cbar=False)

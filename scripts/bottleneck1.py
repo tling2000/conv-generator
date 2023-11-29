@@ -35,7 +35,6 @@ if __name__ == '__main__':
     lr = 0.0001
     rounds = 400
     K = KERNEL_SIZE
-    
 
     save_root = f'/data2/tangling/conv-generator/outs/bottleneck1'
 
@@ -60,7 +59,6 @@ if __name__ == '__main__':
     # trace_ids = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391,1328,1438,2393,2914,3035,4497,5600]
     # for i in range(500,1000,10):
     #     trace_ids.append(i)
-    
 
 
     save_path = make_dirs(save_root)

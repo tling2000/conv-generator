@@ -1,3 +1,4 @@
+from cProfile import label
 import os,sys
 sys.path.append('../src')
 
@@ -43,7 +44,7 @@ def get_mean_low_freq_scale(image):
 
 if __name__ == '__main__':
     seed = 1
-    device = 'cuda:2'
+    device = 'cuda:0'
     sample_num = 100
     sample_net_num = 1
     with_relu = True
@@ -56,9 +57,9 @@ if __name__ == '__main__':
         '/data2/tangling/conv-generator/data/broden1_224/image.pt',
     ]
     tags = [
-        'CIFAR-10',
-        'Tiny-ImageNet',
-        'Broden',
+        'cifar-10',
+        'tiny-imagenet',
+        'broden',
     ]
     kernel_sizes = [1,3,5]
 
@@ -70,15 +71,14 @@ if __name__ == '__main__':
     save_current_src(save_path,'../src')
     save_current_src(save_path,'../scripts')
 
-
-    fig,ax = plt.subplots(figsize=(2.4,1.7))
-
-    ax.set_xlabel('Kernel size K',fontdict={'size':16})
-    ax.set_ylabel(r'$p^{low}$',fontdict={'size':16})
+    ft  = 12
+    fig,ax = plt.subplots(figsize=(2.8,1.7))
+    ax.set_xlabel('Kernel size K',fontdict={'size':ft})
+    ax.set_ylabel('average '+ r'$p^{low}$'+' value \n over images',fontdict={'size':ft})
     ax.set_xticks(kernel_sizes)
     ax.grid(True,linestyle='--')
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
+    plt.xticks(fontsize=ft)
+    plt.yticks(fontsize=ft)
 
     for i in range(len(data_paths)):
         set_random(seed)
@@ -121,7 +121,8 @@ if __name__ == '__main__':
             out_scale_lis.append(out_scale)
 
         ax.plot(kernel_sizes,out_scale_lis,label=tag)
+        print(out_scale_lis)
 
     ax.legend()
-    fig.savefig(os.path.join(save_path,'ratio.pdf'),bbox_inches='tight')
+    fig.savefig(os.path.join(save_path,'ratio.png'),dpi=300,bbox_inches='tight')
 

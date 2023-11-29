@@ -37,6 +37,8 @@ def train1(
         'decode/6',
         'decode/9',
         'decode/12',
+        'decode/15',
+        'decode/18',
     ]
     hook = Hook(model,layer_names)
 

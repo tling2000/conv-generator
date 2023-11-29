@@ -53,18 +53,18 @@ if __name__ == '__main__':
 
     save_root = f'/data2/tangling/conv-generator/outs/remark1/'
 
-    # tag = 'cifar'
-    # data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
+    tag = 'cifar'
+    data_path = '/data2/tangling/conv-generator/data/cifar-10-batches-py/image.pt'
     # trace_index = (0,1,2,4,8,16)
-    # trace_index = ((1,10),(3,7),(5,2),(8,4),(9,5))
+    trace_index = ((1,10),(3,7),(5,2),(8,4),(9,5))
 
     # tag = 'imagenet'
     # data_path = '/data2/tangling/conv-generator/data/tiny-imagenet/image.pt'
     # trace_index = (0,1,2,4,8,16,32)
 
-    tag = 'broden'
-    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
-    trace_index = (0,1,2,4,8,16,32,64,112)
+    # tag = 'broden'
+    # data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+    # trace_index = (0,1,2,4,8,16,32,64,112)
 
     
     save_path = make_dirs(save_root)
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     conv_net.reset_params(PARAM_MEAN,PARAM_STD)
     relu = torch.nn.ReLU()
 
-    #get som lis
+    # get som lis
     # soms_lis = []
     # for j in  tqdm(range(sample_net_num)):
     #     som_lis = []
@@ -103,7 +103,6 @@ if __name__ == '__main__':
 
     #         if with_relu:
     #             outputs = relu(outputs)
-            
     #     som_array = torch.concat(som_lis)
     #     soms_lis.append(som_array.unsqueeze(0))
     # soms_array = torch.concat(soms_lis).mean(0)
@@ -111,18 +110,26 @@ if __name__ == '__main__':
 
     soms_array = torch.load('/data2/tangling/conv-generator/outs/remark1/0924/0924-210257-conv_num50-K5-in_channels3-mid_channels16-biasFalse-mean0-std0.1/soms.pt')
     
+    # colors = ['#FDE725FF','#DCE319FF','#B8DE29FF','#95D840FF','#73D055FF','#55C667FF','#3CBB75FF','#29AF7FFF','#20A387FF']
+    colors = ['#ff432e','#e64f43','#cd5b58','#b4676c','#9b7381','#838096','#6a8cab','#5198c0','#38a4d4',' #1fb0e9',' #1fb0e9','#06bcfe']
+    # colors = plt.get_cmap('Set2')
     #plot
     x = range(1,CONV_NUM+1)
-    fig,ax = plt.subplots(figsize=(3,2.6))
+    fig,ax = plt.subplots(figsize=(4.2,2.8))
     # ax.set_yscale('log',base=10)
     ax.grid(True, which = 'both',linestyle='--')
-    ax.set_ylabel(r'$\mathbf{log}$ SOM($\mathbf{h}^{(uv)}$)',fontdict={'size':16})
-    ax.set_xlabel('Network layer number',fontdict={'size':16})
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
+    ax.set_ylabel(r'$\mathbf{log}$ SOM($\mathbf{h}^{(uv)}$)',fontdict={'size':14})
+    ax.set_xlabel('Depth of the network',fontdict={'size':14})
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    lenth = len(trace_index)
     for i,index in enumerate(trace_index):
-        ax.plot(x,torch.log10(soms_array[:,index,index]),label=f'u=v={index}',c='red',alpha=1-(i/(len(trace_index)+2)))
-        # ax.plot(x,torch.log10(soms_array[:,index[0],index[1]]),label=f'u={index[0]},v={index[1]}',c='red',alpha=1-(i/(len(trace_index)+2)))
-    ax.legend(loc=2)
+        # ax.plot(x,torch.log10(soms_array[:,index,index]),label=f'u=v={index}',c='red',alpha=1-(i/(len(trace_index)+2)))
+        # ax.plot(x,torch.log10(soms_array[:,index[0],index[1]]),label=f'u={index[0]},v={index[1]}',c = 1-(i/(len(trace_index)+2)),cmap='viridis')
+
+        # ax.plot(x,torch.log10(soms_array[:,index,index]),label=f'u=v={index}',c=colors[i*9//lenth])
+        ax.plot(x,torch.log10(soms_array[:,index[0],index[1]]),label=f'u={index[0]},v={index[1]}',c=colors[i*9//lenth])
+
+    ax.legend(loc=2,ncol=1,fontsize=13)
     fig.savefig(os.path.join(save_path,f'{tag}_som.pdf'),bbox_inches='tight')
     

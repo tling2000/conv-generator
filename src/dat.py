@@ -70,16 +70,25 @@ def create_cifar_data(
     torch.save(Xs,os.path.join(save_path,f'image.pt'))
     return True
 
+def sample(data_path,save_path,ids):
+    Xs = torch.load(data_path)
+    s_Xs = Xs[ids].cpu().numpy()
+    np.save(os.path.join(save_path,'images.npy'),s_Xs)
+
 
 
 if __name__ == '__main__':
+    data_path = '/data2/tangling/conv-generator/data/broden1_224/image.pt'
+    save_path = '/data2/tangling/conv-generator/data/broden1_224'
+    ids = [16,17,26,31,35,40,46,59,72,79,80,82,90,98,391,1328,1438,2393,2914,3035,4497,5600]
+    sample(data_path,save_path,ids)
     # create_cifar_data(
     #     '/data2/tangling/conv-generator/data/cifar-10-batches-py/data_batch_1',
     #     '/data2/tangling/conv-generator/data/cifar-10-batches-py'
     # )
-    create_data(
-        (64,64),
-        None,
-        data_path='/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled2',
-        save_path='/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled2'
-    )
+    # create_data(
+    #     (64,64),
+    #     None,
+    #     data_path='/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled2',
+    #     save_path='/data2/tangling/conv-generator/data/tiny-imagenet/tiny-imagenet-200/sampled2'
+    # )

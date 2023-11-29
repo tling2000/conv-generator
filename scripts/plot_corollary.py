@@ -1,5 +1,5 @@
 from matplotlib import pyplot as plt
-from matplotlib.pyplot import MultipleLocator
+import matplotlib.ticker as mtick
 import numpy as np
 import os
 
@@ -12,46 +12,50 @@ def plot_mean_std(ax,index,mean,std,color,label,ls):
     return True
 
 def plot_figure(root1,root2,root3,label1,label2,label3,save_root,name,index):
-    figsize = (3.4,2.5)
-    y_major_locator=MultipleLocator(0.05)
+    figsize = (3,2.6)
+    # y_major_locator=MultipleLocator(0.05)
     
     fig,ax = plt.subplots(figsize=figsize)
-    ax.set_xlabel('Network layer number',fontdict={'size':16})
+    ax.set_xlabel('Depth of the network',fontdict={'size':16})
     ax.set_ylabel('Cosine similarity',fontdict={'size':16})
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     ax.grid(True, which = 'both',linestyle='--')
-    ax.yaxis.set_major_locator(y_major_locator)
-    ax.set_ylim([0.78,1.01])
-
-    mean_c = np.load(os.path.join(root1,'mean_cos.npy'))[index]
-    std_c = np.load(os.path.join(root1,'std_cos.npy'))[index]
-    plot_mean_std(ax,index,mean_c,std_c,'C0',label1,ls='-.')
-
-    mean_c = np.load(os.path.join(root2,'mean_cos.npy'))[index]
-    std_c = np.load(os.path.join(root2,'std_cos.npy'))[index]
-    plot_mean_std(ax,index,mean_c,std_c,'C1',label2,ls='--')
+    # ax.yaxis.set_major_locator(y_major_locator)
+    ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
 
     mean_c = np.load(os.path.join(root3,'mean_cos.npy'))[index]
     std_c = np.load(os.path.join(root3,'std_cos.npy'))[index]
     plot_mean_std(ax,index,mean_c,std_c,'C2',label3,ls='-')
 
-    ax.legend(loc=7)
+    mean_c = np.load(os.path.join(root2,'mean_cos.npy'))[index]
+    std_c = np.load(os.path.join(root2,'std_cos.npy'))[index]
+    plot_mean_std(ax,index,mean_c,std_c,'C1',label2,ls='--')
+
+    mean_c = np.load(os.path.join(root1,'mean_cos.npy'))[index]
+    std_c = np.load(os.path.join(root1,'std_cos.npy'))[index]
+    plot_mean_std(ax,index,mean_c,std_c,'C0',label1,ls='-.')
+
+    num1 = 1.02
+    num2 = 0
+    num3 = 3
+    num4 = 0
+    ax.legend(bbox_to_anchor=(num1, num2), loc=num3, borderaxespad=num4,fontsize = 16)
     fig.savefig(os.path.join(save_root,f'{name}.pdf'),bbox_inches='tight')
     return True
 
 
 if __name__ == '__main__':
-    label1 = 'w/o zero padding, w/o ReLU'
-    label2 = 'w/ zero padding, w/o ReLU'
-    label3 = 'w/ zero padding, w/ ReLU'
+    label1 = 'baseline3\nw/o zero padding, w/o ReLU'
+    label2 = 'baseline2\nw/ zero padding, w/o ReLU'
+    label3 = 'baseline1\nw/ zero padding, w/ ReLU'
     tag = 'broden'
 
     # corollary1
     root1 = f'/data2/tangling/conv-generator/outs/corollary1/0922/{tag}-theo'
     root2 = f'/data2/tangling/conv-generator/outs/corollary1/0922/{tag}-worelu'
     root3 = f'/data2/tangling/conv-generator/outs/corollary1/0922/{tag}-relu'
-    save_root = '/data2/tangling/conv-generator/outs/corollary1/'
+    save_root = '/data2/tangling/conv-generator/outs/corollary1/0118'
     name = f'{tag}'
     plot_figure(root1,root2,root3,label1,label2,label3,save_root,name,range(9))
 
@@ -59,7 +63,6 @@ if __name__ == '__main__':
     root1 = f'/data2/tangling/conv-generator/outs/corollary2/0924/{tag}-theo'
     root2 = f'/data2/tangling/conv-generator/outs/corollary2/0924/{tag}-worelu'
     root3 = f'/data2/tangling/conv-generator/outs/corollary2/0924/{tag}-relu'
-    save_root = f'/data2/tangling/conv-generator/outs/corollary2/'
+    save_root = f'/data2/tangling/conv-generator/outs/corollary2/0118'
     name = f'{tag}'
     plot_figure(root1,root2,root3,label1,label2,label3,save_root,name,range(1,10))
-
