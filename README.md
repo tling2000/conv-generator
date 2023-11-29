@@ -21,6 +21,53 @@ Investigate the expression bottleneck of convolutional generative networks.
         conda install pytorch=1.10.2 torchvision=0.11.3 torchaudio=0.10.2 cudatoolkit=11.1 -c pytorch -c nvidia
     ```
 
+# Src 
+--coef.py [the coeffients for calculation] 
+
+--config.py [the configuration]
+
+--dat.py [load the data]
+
+--hook.py [the hook on the model to register data in the propagation process]
+
+--models.py [the models used for the exps]
+
+--train.py [train the models]
+
+--utils.py [useful tools]
+
+# Scripts
+--bottleneck1.py [train the model to verify the bottleneck 1]
+
+--bottleneck2.py [train the model to verify the bottleneck 2]
+
+--corollary1.py [verify the corollary 1]
+
+--corollary2.py [verify the corollary 2]
+
+--plot_bottleneck1.py [visualize the bottleneck 1]
+
+--plot_bottleneck2.py [visualize the bottleneck 2]
+
+--plot_corollary.py [visualize the corollaries]
+
+--remark1.py [verify the remark 1]
+
+--remark2.py [verify the remark 2]
+
+--remark3.py [verify the remark 3]
+
+--remark4.py [verify the remark 4]
+
+--remark5.py [verify the remark 5]
+
+--theorem5.py [verify the theorem 5]
+
+--theorem6.py [verify the theorem 6]
+
+
+
+
 ## Contact
 
 Please contact [tling@sjtu.edu.cn] if you have any question on the codes.
