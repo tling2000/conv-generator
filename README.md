@@ -2,8 +2,7 @@
 
 ## Abstract
 
-Investigate the expression bottleneck of convolutional generative networks.
-
+This repository is a pytorch implementation of "Defects of Convolutional Decoder Networks in Frequency Representation", which has been published at ICML2023.
 
 ## Requirements
 
@@ -21,7 +20,10 @@ Investigate the expression bottleneck of convolutional generative networks.
         conda install pytorch=1.10.2 torchvision=0.11.3 torchaudio=0.10.2 cudatoolkit=11.1 -c pytorch -c nvidia
     ```
 
-# Src 
+## Document Structure
+
+
+### Src 
 --coef.py [the coeffients for calculation] 
 
 --config.py [the configuration]
@@ -36,7 +38,7 @@ Investigate the expression bottleneck of convolutional generative networks.
 
 --utils.py [useful tools]
 
-# Scripts
+### Scripts
 --bottleneck1.py [train the model to verify the bottleneck 1]
 
 --bottleneck2.py [train the model to verify the bottleneck 2]
